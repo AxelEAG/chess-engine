@@ -10,7 +10,7 @@ class Piece
 public:
 	virtual ~Piece() = default;
 
-	virtual std::vector<Coord> getValidMoves(const Board& board, Coord position) = 0;
+	virtual std::vector<Coord> getValidMoves(const Board& board, Coord position) const = 0;
 	virtual char getSymbol() const = 0;
 };
 

@@ -9,6 +9,12 @@ std::size_t getPosition(Coord coord)
 	return (Board::numCols * coord.y + coord.x);
 }
 
+void Board::move(Coord from, Coord to)
+{
+	m_board[getPosition(to)] = std::move(m_board[getPosition(from)]);
+}
+
+
 void Board::reset()
 {
 	for (auto& square : m_board)
@@ -19,7 +25,9 @@ void Board::setup()
 {
 	for (int i{ 0 }; i < 8; ++i)
 	{
-		set<Pawn>(Coord{ i, 1 }, Side::white);
+		set<Pawn>(Coord{ i, 6 }, Side::white);
+		set<Pawn>(Coord{ i, 1 }, Side::black);
+
 	}
 }
 
@@ -34,4 +42,5 @@ void Board::print()
 		}
 		std::cout << '\n';
 	}
+	std::cout << '\n';
 }

@@ -19,6 +19,7 @@ public:
 
 	template<typename T>
 	void set(Coord coord, Side side);
+	void move(Coord from, Coord to);
 
 	void reset();
 	void setup();
