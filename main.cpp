@@ -1,8 +1,5 @@
-#include <array>
-#include <string>
-#include <string_view>
+#include "Board.h"
 #include <iostream>
-#include <algorithm>
 
 // Goal: Create a terminal version of chess
 // Display board
@@ -16,36 +13,16 @@
 // Player class?
 // 
 
-class Board
-{
-public:
-	void print()
-	{
-		for (std::size_t i{ 0 }; i < numRows; ++i)
-		{
-			for (std::size_t j{ 0 }; j < numCols; ++j)
-				std::cout << m_board[numCols * i + j] << ' ';
-			std::cout << '\n';
-		}
-	}
 
-	void reset()
-	{
-		std::fill(m_board.begin(), m_board.end(), '-');
-	}
 
-	Board()
-	{
-		reset();
-	}
-private:
-	static constexpr std::size_t numRows{ 8 };
-	static constexpr std::size_t numCols{ 8 };
-	std::array<char, numRows* numCols> m_board{};
 
-};
 int main()
 {
 	Board board{};
+	board.reset();
+	board.print();
+	std::cout << '\n';
+	// board.set<Pawn>(Coord{ 2, 1 }, white);
+	board.setup();
 	board.print();
 }
