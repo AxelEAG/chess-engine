@@ -70,7 +70,9 @@ void Board::print()
 		for (std::size_t j{ 0 }; j < numCols; ++j)
 		{
 			auto& piece = m_board[numCols * i + j];
-			std::cout << (piece ? piece->getSymbol() : '-') << ' ';
+			char symbol{ piece ? piece->getSymbol() : '-' };
+			if (piece && piece->getSide() == Side::black) symbol = std::tolower(symbol);
+			std::cout << symbol << ' ';
 		}
 		std::cout << '|' << rowNumber-- << '\n';
 	}
