@@ -1,6 +1,6 @@
-#include "Board.h"
-#include "Coord.h"
-#include "Bishop.h"
+#include "board.h"
+#include "coord.h"
+#include "bishop.h"
 #include <vector>
 
 std::vector<Coord> Bishop::getValidMoves(const Board& board, Coord position) const

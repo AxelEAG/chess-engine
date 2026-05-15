@@ -1,7 +1,7 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include "Coord.h"
+#include "coord.h"
 #include <vector>
 
 class Board;

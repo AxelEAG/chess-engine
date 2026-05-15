@@ -1,11 +1,11 @@
 #include <iostream>
 #include <array>
-#include "Coord.h"
-#include "Board.h"
-#include "Pawn.h"
-#include "Rook.h"
-#include "Bishop.h"
-#include "Queen.h"
+#include "coord.h"
+#include "board.h"
+#include "pawn.h"
+#include "rook.h"
+#include "bishop.h"
+#include "queen.h"
 
 std::size_t getPosition(Coord coord)
 {

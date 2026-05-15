@@ -1,8 +1,8 @@
 #ifndef ROOK_H
 #define ROOK_H
 
-#include "Coord.h"
-#include "Piece.h"
+#include "coord.h"
+#include "piece.h"
 
 class Board;
 class Rook : public Piece

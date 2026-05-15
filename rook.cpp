@@ -1,6 +1,6 @@
-#include "Board.h"
-#include "Coord.h"
-#include "Rook.h"
+#include "board.h"
+#include "coord.h"
+#include "rook.h"
 #include <vector>
 
 

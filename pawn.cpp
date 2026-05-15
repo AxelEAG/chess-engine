@@ -1,8 +1,7 @@
-#include "Board.h"
-#include "Coord.h"
-#include "Pawn.h"
+#include "board.h"
+#include "coord.h"
+#include "pawn.h"
 #include <vector>
-
 
 std::vector<Coord> Pawn::getValidMoves(const Board& board, Coord position) const
 {

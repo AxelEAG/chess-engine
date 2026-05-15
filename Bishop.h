@@ -1,8 +1,8 @@
 #ifndef BISHOP_H
 #define BISHOP_H
 
-#include "Coord.h"
-#include "Piece.h"
+#include "coord.h"
+#include "piece.h"
 
 class Board;
 class Bishop : public Piece

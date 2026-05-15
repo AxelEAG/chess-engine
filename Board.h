@@ -1,8 +1,8 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "Coord.h"
-#include "Piece.h"
+#include "coord.h"
+#include "piece.h"
 #include <array>
 #include <cstddef>
 #include <memory>

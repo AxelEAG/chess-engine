@@ -1,7 +1,10 @@
-#include "Coord.h"
-#include "Board.h"
-#include "Piece.h"
-#include "Pawn.h"
+#include "coord.h"
+#include "board.h"
+#include "piece.h"
+#include "pawn.h"
+#include "bishop.h"
+#include "queen.h"
+
 #include <iostream>
 
 // Goal: Create a terminal version of chess
@@ -42,22 +45,27 @@ int main()
 	board.setup();
 	board.print();
 
-	board.move({ 7, 6 }, { 7, 2 });
-	board.set<Pawn>({ 7, 4 }, Side::black);
+	//board.move({ 7, 6 }, { 7, 2 });
+	//board.set<Pawn>({ 7, 4 }, Side::black);
+	//board.print();
+
+	// Queen checking
+	board.set<Queen>({ 4, 4 }, Side::white);
 	board.print();
+	printMoves(board, { 4, 4 });
 
 	// Rook checking
-	auto start{ Coord {7, 7} };
-	printMoves(board, start);
-	std::cout << '\n';
+	//auto start{ Coord {7, 7} };
+	//printMoves(board, start);
+	//std::cout << '\n';
 
-	auto to{ Coord {2, 7} };
-	board.move(start, to);
-	board.print();
+	//auto to{ Coord {2, 7} };
+	//board.move(start, to);
+	//board.print();
 
-	printMoves(board, start);
-	printMoves(board, to);
-	std::cout << '\n';
+	//printMoves(board, start);
+	//printMoves(board, to);
+	//std::cout << '\n';
 
 	// Pawn checking
 	//auto start{ Coord {3, 6} };

@@ -1,6 +1,6 @@
-#include "Board.h"
-#include "Coord.h"
-#include "Queen.h"
+#include "board.h"
+#include "coord.h"
+#include "queen.h"
 #include <vector>
 
 std::vector<Coord> Queen::getValidMoves(const Board& board, Coord position) const
