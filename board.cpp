@@ -6,6 +6,7 @@
 #include "rook.h"
 #include "bishop.h"
 #include "queen.h"
+#include "king.h"
 
 std::size_t getPosition(Coord coord)
 {
@@ -40,6 +41,9 @@ void Board::setup()
 
 	set<Queen>(Coord{ 3, 7 }, Side::white);
 	set<Queen>(Coord{ 3, 0 }, Side::black);
+
+	set<King>(Coord{ 4, 7 }, Side::white);
+	set<King>(Coord{ 4, 0 }, Side::black);
 
 	for (int i{ 0 }; i < 8; ++i)
 	{
