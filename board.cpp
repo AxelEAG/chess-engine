@@ -5,6 +5,7 @@
 #include "Pawn.h"
 #include "Rook.h"
 #include "Bishop.h"
+#include "Queen.h"
 
 std::size_t getPosition(Coord coord)
 {
@@ -36,6 +37,9 @@ void Board::setup()
 
 	set<Bishop>(Coord{ 2, 0 }, Side::black);
 	set<Bishop>(Coord{ 5, 0 }, Side::black);
+
+	set<Queen>(Coord{ 3, 7 }, Side::white);
+	set<Queen>(Coord{ 3, 0 }, Side::black);
 
 	for (int i{ 0 }; i < 8; ++i)
 	{
