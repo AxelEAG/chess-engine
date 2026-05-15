@@ -12,6 +12,7 @@ public:
 
 	virtual std::vector<Coord> getValidMoves(const Board& board, Coord position) const = 0;
 	virtual char getSymbol() const = 0;
+	virtual Side getSide() const = 0;
 };
 
 #endif

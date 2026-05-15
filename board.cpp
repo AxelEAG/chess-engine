@@ -3,6 +3,7 @@
 #include "Coord.h"
 #include "Board.h"
 #include "Pawn.h"
+#include "Rook.h"
 
 std::size_t getPosition(Coord coord)
 {
@@ -23,12 +24,19 @@ void Board::reset()
 
 void Board::setup()
 {
+	set<Rook>(Coord{ 0, 7 }, Side::white);
+	set<Rook>(Coord{ 7, 7 }, Side::white);
+
+	set<Rook>(Coord{ 0, 0 }, Side::black);
+	set<Rook>(Coord{ 7, 0 }, Side::black);
+
 	for (int i{ 0 }; i < 8; ++i)
 	{
 		set<Pawn>(Coord{ i, 6 }, Side::white);
 		set<Pawn>(Coord{ i, 1 }, Side::black);
-
 	}
+
+
 }
 
 void Board::print()
