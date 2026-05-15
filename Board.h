@@ -16,6 +16,7 @@ class Board
 public:
 	static constexpr std::size_t numRows{ 8 };
 	static constexpr std::size_t numCols{ 8 };
+	static constexpr std::array<char, numCols> colSymbol{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
 	template<typename T>
 	void set(Coord coord, Side side);

@@ -33,6 +33,8 @@ void Board::setup()
 
 void Board::print()
 {
+	int rowNumber{ numRows };
+
 	for (std::size_t i{ 0 }; i < numRows; ++i)
 	{
 		for (std::size_t j{ 0 }; j < numCols; ++j)
@@ -40,7 +42,10 @@ void Board::print()
 			auto& piece = m_board[numCols * i + j];
 			std::cout << (piece ? piece->getSymbol() : '-') << ' ';
 		}
-		std::cout << '\n';
+		std::cout << rowNumber-- << '\n';
 	}
-	std::cout << '\n';
+
+	for (auto col : colSymbol)
+		std::cout << col << ' ';
+	std::cout << '\n' << '\n';
 }
