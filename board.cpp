@@ -72,8 +72,12 @@ void Board::print()
 			auto& piece = m_board[numCols * i + j];
 			std::cout << (piece ? piece->getSymbol() : '-') << ' ';
 		}
-		std::cout << rowNumber-- << '\n';
+		std::cout << '|' << rowNumber-- << '\n';
 	}
+
+	for (int i{ 0 }; i < numRows; ++i)
+		std::cout << "--";
+	std::cout << '\n';
 
 	for (auto col : colSymbol)
 		std::cout << col << ' ';
