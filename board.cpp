@@ -12,18 +12,6 @@
 #include "king.h"
 #include "knight.h"
 
-enum PiecePosition
-{
-	pxRook,
-	pxKnight,
-	pxBishop,
-	pxQueen,
-	pxKing,
-	px2Bishop,
-	px2Knight,
-	px2Rook
-};
-
 std::size_t getPosition(Coord coord)
 {
 	return (Board::numCols * coord.y + coord.x);
