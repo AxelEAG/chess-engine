@@ -1,5 +1,8 @@
 #include <iostream>
 #include <array>
+#include <utility>
+#include <cctype>
+
 #include "coord.h"
 #include "board.h"
 #include "pawn.h"
@@ -17,6 +20,8 @@ std::size_t getPosition(Coord coord)
 void Board::move(Coord from, Coord to)
 {
 	m_board[getPosition(to)] = std::move(m_board[getPosition(from)]);
+	// TODO: take the piece (although by default as it's unique ptrs, they already behave as if they did)
+
 }
 
 

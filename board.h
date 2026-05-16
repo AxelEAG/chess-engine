@@ -31,7 +31,7 @@ public:
 
 	void print();
 private:
-	std::array<std::unique_ptr<Piece>, numRows* numCols> m_board;
+	std::array<std::unique_ptr<Piece>, numRows * numCols> m_board;
 };
 
 template<typename T>

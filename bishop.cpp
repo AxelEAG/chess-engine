@@ -5,7 +5,6 @@
 
 std::vector<Coord> Bishop::getValidMoves(const Board& board, Coord position) const
 {
-	Side currSide{ board.getPiece(position)->getSide() };
 	std::vector<Coord> moves{};
 	auto walk = [&](int dx, int dy)
 		{
@@ -18,7 +17,7 @@ std::vector<Coord> Bishop::getValidMoves(const Board& board, Coord position) con
 				Coord to{ x, y };
 				if (!board.isEmpty(to))
 				{
-					if (board.getPiece(to)->getSide() != currSide)
+					if (board.getPiece(to)->getSide() != m_side)
 						moves.push_back(to);
 					break;
 				}

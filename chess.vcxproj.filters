@@ -33,6 +33,12 @@
     <ClCompile Include="queen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="king.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="knight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Coord.h">
@@ -56,5 +62,14 @@
     <ClInclude Include="queen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="king.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="knight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="chess.slnx" />
   </ItemGroup>
 </Project>

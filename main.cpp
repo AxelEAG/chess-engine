@@ -26,10 +26,14 @@ void printMoves(Board& board, Coord coord)
 	auto piece{ board.getPiece(coord) };
 	if (piece)
 	{
-		std::cout << piece->getSymbol() << Board::colSymbol[static_cast<std::size_t>(coord.x)] << coord.y << ": ";
+		std::cout << piece->getSymbol() << Board::colSymbol[static_cast<std::size_t>(coord.x)] << coord.y;
 		auto moves{ piece->getValidMoves(board, coord) };
+		char separator{ ':' };
 		for (auto move : moves)
-			std::cout << Board::colSymbol[move.x] << (Board::numRows - move.y) << ',' << ' ';
+		{
+			std::cout << separator << ' ' << Board::colSymbol[move.x] << (Board::numRows - move.y);
+			separator = ',';
+		}
 	}
 	else
 		std::cout << "No piece";
@@ -50,9 +54,14 @@ int main()
 	//board.print();
 
 	// Queen checking
-	board.set<Queen>({ 4, 4 }, Side::white);
+	board.set<Queen>({ 4, 4 }, Side::black);
 	board.print();
 	printMoves(board, { 4, 4 });
+
+	board.set<Pawn>({ 5, 5 }, Side::white);
+	board.print();
+	printMoves(board, { 5, 5 });
+
 
 	// Rook checking
 	//auto start{ Coord {7, 7} };

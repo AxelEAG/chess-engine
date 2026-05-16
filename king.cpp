@@ -7,7 +7,6 @@ std::vector<Coord> King::getValidMoves(const Board& board, Coord position) const
 {
 	// TODO: Remove moves that a piece can attack
 	// TODO: Add castling
-	Side currSide{ board.getPiece(position)->getSide() };
 	std::vector<Coord> moves{};
 	auto walk = [&](int dx, int dy)
 		{
@@ -19,7 +18,7 @@ std::vector<Coord> King::getValidMoves(const Board& board, Coord position) const
 			Coord to{ x, y };
 			if (!board.isEmpty(to))
 			{
-				if (board.getPiece(to)->getSide() != currSide)
+				if (board.getPiece(to)->getSide() != m_side)
 					moves.push_back(to);
 			} 
 			else
