@@ -12,6 +12,18 @@
 #include "king.h"
 #include "knight.h"
 
+enum PiecePosition
+{
+	pxRook,
+	pxKnight,
+	pxBishop,
+	pxQueen,
+	pxKing,
+	px2Bishop,
+	px2Knight,
+	px2Rook
+};
+
 std::size_t getPosition(Coord coord)
 {
 	return (Board::numCols * coord.y + coord.x);
@@ -33,37 +45,21 @@ void Board::reset()
 
 void Board::setup()
 {
-	set<Rook>(Coord{ 0, 7 }, Side::white);
-	set<Rook>(Coord{ 7, 7 }, Side::white);
-
-	set<Rook>(Coord{ 0, 0 }, Side::black);
-	set<Rook>(Coord{ 7, 0 }, Side::black);
-
-	set<Knight>(Coord{ 1, 7 }, Side::white);
-	set<Knight>(Coord{ 6, 7 }, Side::white);
-
-	set<Knight>(Coord{ 1, 0 }, Side::black);
-	set<Knight>(Coord{ 6, 0 }, Side::black);
-
-	set<Bishop>(Coord{ 2, 7 }, Side::white);
-	set<Bishop>(Coord{ 5, 7 }, Side::white);
-
-	set<Bishop>(Coord{ 2, 0 }, Side::black);
-	set<Bishop>(Coord{ 5, 0 }, Side::black);
-
-	set<Queen>(Coord{ 3, 7 }, Side::white);
-	set<Queen>(Coord{ 3, 0 }, Side::black);
-
-	set<King>(Coord{ 4, 7 }, Side::white);
-	set<King>(Coord{ 4, 0 }, Side::black);
-
-	for (int i{ 0 }; i < 8; ++i)
+	for (Side side : { Side::white, Side::black })
 	{
-		set<Pawn>(Coord{ i, 6 }, Side::white);
-		set<Pawn>(Coord{ i, 1 }, Side::black);
+		int majorRow{ side == Side::white ? 7 : 0 };
+		int pawnRow { side == Side::white ? 6 : 1 };
+
+		placePair<Rook>  (0, majorRow, side);
+		placePair<Knight>(1, majorRow, side);
+		placePair<Bishop>(2, majorRow, side);
+
+		set<Queen>({ 3, majorRow }, side);
+		set<King> ({ 4, majorRow }, side);
+
+		for (int x{ 0 }; x < numCols; ++x)
+			set<Pawn>({ x, pawnRow }, side);
 	}
-
-
 }
 
 void Board::print()

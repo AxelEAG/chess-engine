@@ -20,6 +20,7 @@ public:
 
 	template<typename T>
 	void set(Coord coord, Side side);
+
 	void move(Coord from, Coord to);
 
 	void reset();
@@ -32,12 +33,22 @@ public:
 	void print();
 private:
 	std::array<std::unique_ptr<Piece>, numRows * numCols> m_board;
+	template <typename T>
+	void placePair(int xpos, int row, Side side);
 };
 
 template<typename T>
 void Board::set(Coord coord, Side side)
 {
 	m_board[getPosition(coord)] = std::make_unique<T>(side);
+}
+
+// Helper function for board setup
+template <typename T>
+void Board::placePair(int xpos, int row, Side side)
+{
+	Board::set<T>({ xpos, row }, side);
+	Board::set<T>({ 7 - xpos, row }, side);
 }
 
 #endif 
