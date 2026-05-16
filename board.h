@@ -37,7 +37,7 @@ private:
 template<typename T>
 void Board::set(Coord coord, Side side)
 {
-	m_board[getPosition(coord)] = std::make_unique<T>(coord, side);
+	m_board[getPosition(coord)] = std::make_unique<T>(side);
 }
 
 #endif 

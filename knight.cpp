@@ -23,15 +23,8 @@ std::vector<Coord> Knight::getValidMoves(const Board& board, Coord position) con
 				moves.push_back(to);
 		};
 
-	walk(1, 2);
-	walk(-1, 2);
-	walk(1, -2);
-	walk(-1, -2);
-
-	walk(2, 1);
-	walk(2, -1);
-	walk(-2, -1);
-	walk(-2, 1);
+	for (auto dir : Knight::dirs)
+		walk(dir.x, dir.y);
 
 	return moves;
 }

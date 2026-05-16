@@ -12,7 +12,10 @@ public:
 
 	virtual std::vector<Coord> getValidMoves(const Board& board, Coord position) const = 0;
 	virtual char getSymbol() const = 0;
-	virtual Side getSide() const = 0;
+	Side getSide() const { return m_side; }
+protected:
+	Piece(Side side) : m_side{ side } {}
+	Side m_side{};
 };
 
 #endif

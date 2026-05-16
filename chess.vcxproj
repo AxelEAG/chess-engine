@@ -147,9 +147,6 @@
     <ClInclude Include="queen.h" />
     <ClInclude Include="Rook.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="chess.slnx" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
