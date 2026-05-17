@@ -3,11 +3,11 @@
 #include "king.h"
 #include <vector>
 
-std::vector<Coord> King::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> King::getValidMoves(const Board& board, Coord position) const
 {
 	// TODO: Remove moves that a piece can attack
 	// TODO: Add castling
-	std::vector<Coord> moves{};
+	std::vector<Move> moves{};
 	auto walk = [&](int dx, int dy)
 		{
 			int x{ position.x + dx };
@@ -16,13 +16,14 @@ std::vector<Coord> King::getValidMoves(const Board& board, Coord position) const
 				(x < 0 || x >= Board::numCols)) return;
 
 			Coord to{ x, y };
+			Move move{ to };
 			if (!board.isEmpty(to))
 			{
 				if (board.getPiece(to)->getSide() != m_side)
-					moves.push_back(to);
+					moves.push_back(move);
 			} 
 			else
-				moves.push_back(to);
+				moves.push_back(move);
 		};
 
 	for (auto dir : King::dirs)

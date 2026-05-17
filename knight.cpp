@@ -3,9 +3,9 @@
 #include "knight.h"
 #include <vector>
 
-std::vector<Coord> Knight::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> Knight::getValidMoves(const Board& board, Coord position) const
 {
-	std::vector<Coord> moves{};
+	std::vector<Move> moves{};
 	auto walk = [&](int dx, int dy)
 		{
 			int x{ position.x + dx };
@@ -14,13 +14,14 @@ std::vector<Coord> Knight::getValidMoves(const Board& board, Coord position) con
 			if (y < 0 || y >= Board::numRows) return;
 
 			Coord to{ x, y };
+			Move move{ to };
 			if (!board.isEmpty(to))
 			{
 				if (board.getPiece(to)->getSide() != m_side)
-					moves.push_back(to);
+					moves.push_back(move);
 			} 
 			else
-				moves.push_back(to);
+				moves.push_back(move);
 		};
 
 	for (auto dir : Knight::dirs)

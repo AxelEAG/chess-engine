@@ -11,7 +11,7 @@ class King : public Piece
 {
 public:
 
-	std::vector<Coord> getValidMoves(const Board& board, Coord position) const override;
+	std::vector<Move> getValidMoves(const Board& board, Coord position) const override;
 	char getSymbol() const override { return symbol; }
 	King(Side side) : Piece{ side } {}
 

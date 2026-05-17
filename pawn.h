@@ -10,7 +10,7 @@ class Board;
 class Pawn : public Piece
 {
 public:
-	std::vector<Coord> getValidMoves(const Board& board, Coord position) const override;
+	std::vector<Move> getValidMoves(const Board& board, Coord position) const override;
 	char getSymbol() const override { return symbol; }
 	Pawn(Side side) : Piece{ side } {}
 

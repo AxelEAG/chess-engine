@@ -13,5 +13,28 @@ enum class Side
 	black
 };
 
+enum class Special
+{
+	none,
+	en_passant,
+	promotion,
+	queenside_castle,
+	kingside_castle,
+};
+
+enum class Check
+{
+	none,
+	check,
+	checkmate,
+};
+
+struct Move
+{
+	Coord coord{};
+	bool takes{false};
+	Check isCheck{Check::none};
+	Special special{ Special::none };
+};
 
 #endif
