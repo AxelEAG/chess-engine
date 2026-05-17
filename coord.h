@@ -16,6 +16,7 @@ enum class Side
 enum class Special
 {
 	none,
+	double_step,
 	en_passant,
 	promotion,
 	queenside_castle,

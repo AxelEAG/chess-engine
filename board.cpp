@@ -17,9 +17,16 @@ std::size_t getPosition(Coord coord)
 	return (Board::numCols * coord.y + coord.x);
 }
 
-void Board::move(Coord from, Coord to)
+void Board::move(Coord from, const Move& move)
 {
-	m_board[getPosition(to)] = std::move(m_board[getPosition(from)]);
+	m_en_passant.reset(); // en passant only lasts one turn
+	if (move.special == Special::en_passant)
+		m_board[getPosition({ move.coord.x, from.y })].reset(); // Enemy's at same height as pawn but to its left / right
+
+	if (move.special == Special::double_step)
+		m_en_passant = move.coord;
+
+	m_board[getPosition(move.coord)] = std::move(m_board[getPosition(from)]);
 	// TODO: take the piece (although by default as it's unique ptrs, they already behave as if they did)
 
 }

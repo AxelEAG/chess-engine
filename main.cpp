@@ -62,7 +62,7 @@ void printMoves(Board& board, Coord coord)
 		std::cout << piece->getSymbol() << Board::colSymbol[static_cast<std::size_t>(coord.x)] << coord.y;
 		auto moves{ piece->getValidMoves(board, coord) };
 		char separator{ ':' };
-		for (auto move : moves)
+		for (const auto& move : moves)
 		{
 			std::cout << separator << ' ' << stringifyMove(piece->getSymbol(), coord, move);
 			separator = ',';
@@ -116,16 +116,29 @@ int main()
 	board.setup();
 	board.print();
 
+	board.move({ 3,6 }, { Coord {3, 3} });
+	board.print();
+
+	board.move({ 2, 1 }, { .coord = Coord {2, 3}, .special = Special::double_step });
+	board.print();
+
+	std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
+	printMoves(board, { 3, 3 });
+	board.move({ 3, 3 }, { .coord = Coord {2, 2}, .takes=true, .special = Special::en_passant });
+	board.print();
+	std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
+
 	// Queen checking
-	board.set<Queen>({ 4, 4 }, Side::black);
-	board.print();
-	printMoves(board, { 4, 4 });
+	
+	//board.set<Queen>({ 4, 4 }, Side::black);
+	//board.print();
+	//printMoves(board, { 4, 4 });
 
-	board.set<Pawn>({ 5, 5 }, Side::white);
-	board.print();
-	printMoves(board, { 5, 5 });
+	//board.set<Pawn>({ 5, 5 }, Side::white);
+	//board.print();
+	//printMoves(board, { 5, 5 });
 
-	board.set<King>({ 5, 3 }, Side::black);
-	board.print();
-	printMoves(board, { 5, 5 });
+	//board.set<King>({ 5, 3 }, Side::black);
+	//board.print();
+	//printMoves(board, { 5, 5 });
 }

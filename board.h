@@ -6,6 +6,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <optional>
 
 class Piece;
 
@@ -21,18 +22,20 @@ public:
 	template<typename T>
 	void set(Coord coord, Side side);
 
-	void move(Coord from, Coord to);
+	void move(Coord from, const Move& move);
 
 	void reset();
 	void setup();
 	
 	bool isEmpty(Coord coord) const { return (m_board[getPosition(coord)] == nullptr); }
 	const Piece* getPiece(Coord coord) const { return m_board[getPosition(coord)].get(); }
+	std::optional<Coord> getEnPassant() const { return m_en_passant; }
 	Board() { reset(); setup(); };
 
 	void print();
 private:
 	std::array<std::unique_ptr<Piece>, numRows * numCols> m_board;
+	std::optional<Coord> m_en_passant{};
 	template <typename T>
 	void placePair(int xpos, int row, Side side);
 };
