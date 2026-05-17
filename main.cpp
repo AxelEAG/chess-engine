@@ -5,6 +5,7 @@
 #include "bishop.h"
 #include "queen.h"
 #include "king.h"
+#include "rook.h"
 
 #include <iostream>
 #include <string>
@@ -108,25 +109,39 @@ int main()
 	board.reset();
 	board.print();
 
+	board.set<King>({ 4, 7 }, Side::white);
+	board.set<Rook>({ 7, 7 }, Side::white);
+	board.set<Rook>({ 0, 7 }, Side::white);
+
+	board.print();
+	printMoves(board, { 4, 7 });
+
+	// board.move({ 4, 7 }, { .coord = {6, 7}, .special = Special::kingside_castle });
+	board.move({ 4, 7 }, { .coord = {2, 7}, .special = Special::queenside_castle });
+
+	board.print();
+
 	//std::cout << "Enter a move: ";
 	//std::string move{};
 	//std::cin >> move;
 	//std::cout << move << " is " << (isValidMove(board, move) ? "" : "in") << "valid \n";
 
-	board.setup();
-	board.print();
+	//board.setup();
+	//board.print();
 
-	board.move({ 3,6 }, { Coord {3, 3} });
-	board.print();
+	//board.move({ 3,6 }, { Coord {3, 3} });
+	//board.print();
 
-	board.move({ 2, 1 }, { .coord = Coord {2, 3}, .special = Special::double_step });
-	board.print();
 
-	std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
-	printMoves(board, { 3, 3 });
-	board.move({ 3, 3 }, { .coord = Coord {2, 2}, .takes=true, .special = Special::en_passant });
-	board.print();
-	std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
+
+	//board.move({ 2, 1 }, { .coord = Coord {2, 3}, .special = Special::double_step });
+	//board.print();
+
+	//std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
+	//printMoves(board, { 3, 3 });
+	//board.move({ 3, 3 }, { .coord = Coord {2, 2}, .takes=true, .special = Special::en_passant });
+	//board.print();
+	//std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
 
 	// Queen checking
 	

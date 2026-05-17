@@ -6,7 +6,6 @@
 std::vector<Move> King::getValidMoves(const Board& board, Coord position) const
 {
 	// TODO: Remove moves that a piece can attack
-	// TODO: Add castling
 	std::vector<Move> moves{};
 	auto walk = [&](int dx, int dy)
 		{
@@ -16,19 +15,50 @@ std::vector<Move> King::getValidMoves(const Board& board, Coord position) const
 				(x < 0 || x >= Board::numCols)) return;
 
 			Coord to{ x, y };
-			Move move{ to };
 			if (!board.isEmpty(to))
 			{
 				if (board.getPiece(to)->getSide() != m_side)
-					moves.push_back(move);
+					moves.push_back({ .coord = to, .takes = true });
 			} 
 			else
-				moves.push_back(move);
+				moves.push_back({ to });
 		};
 
 	for (auto dir : King::dirs)
 		walk(dir.x, dir.y);
 
+	if (!hasMoved())
+	{
+		// Kingside castle
+		if (board.isEmpty({position.x + 1, position.y}) &&
+			board.isEmpty({position.x + 2, position.y}) &&
+		   !board.isEmpty({position.x + 3, position.y})
+			)
+		{
+			auto piece{ board.getPiece({position.x + 3, position.y}) };
+			if (piece && 
+				piece->getSymbol() == 'R' && 
+				piece->getSide() == m_side && 
+				!(piece->hasMoved()))
+				moves.push_back({ .coord = {6, position.y}, .special = Special::kingside_castle });
+			// TODO: Add check if castling makes a check
+		}
+		// Queenside castle
+		if (board.isEmpty({ position.x - 1, position.y }) &&
+			board.isEmpty({ position.x - 2, position.y }) &&
+			board.isEmpty({ position.x - 3, position.y }) &&
+		   !board.isEmpty({ position.x - 4, position.y })
+			)
+		{
+			auto piece{ board.getPiece({position.x - 4, position.y}) };
+			if (piece &&
+				piece->getSymbol() == 'R' &&
+				piece->getSide() == m_side &&
+				!(piece->hasMoved()))
+				moves.push_back({ .coord = {2, position.y}, .special = Special::queenside_castle });
+			// TODO: Add check if castling makes a check
+		}
+	}
 	return moves;
 
 }

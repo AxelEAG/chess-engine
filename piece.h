@@ -13,9 +13,12 @@ public:
 	virtual std::vector<Move> getValidMoves(const Board& board, Coord position) const = 0;
 	virtual char getSymbol() const = 0;
 	Side getSide() const { return m_side; }
+	bool hasMoved() const { return m_hasMoved; }
+	void setMoved() { m_hasMoved = true; }
 protected:
 	Piece(Side side) : m_side{ side } {}
 	Side m_side{};
+	bool m_hasMoved{ false };
 };
 
 #endif

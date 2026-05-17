@@ -19,14 +19,31 @@ std::size_t getPosition(Coord coord)
 
 void Board::move(Coord from, const Move& move)
 {
-	m_en_passant.reset(); // en passant only lasts one turn
-	if (move.special == Special::en_passant)
-		m_board[getPosition({ move.coord.x, from.y })].reset(); // Enemy's at same height as pawn but to its left / right
+	using enum Special;
 
-	if (move.special == Special::double_step)
+	switch (move.special)
+	{
+	case en_passant:
+		m_board[getPosition({ move.coord.x, from.y })].reset(); // Enemy's at same height as pawn but to its left / right
+		break;
+	case double_step:
 		m_en_passant = move.coord;
+		break;
+	case kingside_castle:
+		m_board[getPosition({ 7, from.y })].get()->hasMoved();
+		m_board[getPosition({ 5, from.y })] = std::move(m_board[getPosition({ 7, from.y })]);
+		break;
+	case queenside_castle:
+		m_board[getPosition({ 0, from.y })].get()->hasMoved();
+		m_board[getPosition({ 3, from.y })] = std::move(m_board[getPosition({ 0, from.y })]);
+		break;
+	}
 
 	m_board[getPosition(move.coord)] = std::move(m_board[getPosition(from)]);
+
+	m_en_passant.reset(); // en passant only lasts one turn
+	auto piece{ m_board[getPosition(from)].get() };
+	if (piece && (piece->getSymbol() == 'K' || piece->getSymbol() == 'R') && !piece->hasMoved()) piece->setMoved();
 	// TODO: take the piece (although by default as it's unique ptrs, they already behave as if they did)
 
 }
