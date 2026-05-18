@@ -25,7 +25,7 @@
 // Player class?
 // 
 
-std::string stringifyMove(char symbol, Coord from, const Move& move)
+std::string stringifyMove(char symbol, Square from, const Move& move)
 {
 	// TODO: Castling
 	if (move.special == Special::kingside_castle)
@@ -38,11 +38,11 @@ std::string stringifyMove(char symbol, Coord from, const Move& move)
 		sMove += symbol;
 	if (move.takes)
 	{
-		if (symbol == 'P') sMove += ('a' + from.x);
+		if (symbol == 'P') sMove += ('a' + from.file);
 		sMove += 'x';
 	}
-	sMove += ('a' + move.coord.x);
-	sMove += ('0' + 8 - move.coord.y);
+	sMove += files[move.to.file];
+	sMove += ranks[move.to.rank];
 	if (move.special == Special::promotion)
 	{
 		sMove += '='; // TODO: Add which piece
@@ -55,17 +55,17 @@ std::string stringifyMove(char symbol, Coord from, const Move& move)
 	return sMove;
 }
 
-void printMoves(Board& board, Coord coord)
+void printMoves(Board& board, Square from)
 {
-	auto piece{ board.getPiece(coord) };
+	auto piece{ board.getPiece(from) };
 	if (piece)
 	{
-		std::cout << piece->getSymbol() << Board::colSymbol[static_cast<std::size_t>(coord.x)] << coord.y;
-		auto moves{ piece->getValidMoves(board, coord) };
+		std::cout << piece->getSymbol() << files[from.file] << ranks[from.rank];
+		auto moves{ piece->getValidMoves(board, from) };
 		char separator{ ':' };
 		for (const auto& move : moves)
 		{
-			std::cout << separator << ' ' << stringifyMove(piece->getSymbol(), coord, move);
+			std::cout << separator << ' ' << stringifyMove(piece->getSymbol(), from, move);
 			separator = ',';
 		}
 	}
@@ -109,18 +109,18 @@ int main()
 	board.reset();
 	board.print();
 
-	board.set<King>({ 4, 7 }, Side::white);
-	board.set<Rook>({ 7, 7 }, Side::white);
-	board.set<Rook>({ 0, 7 }, Side::white);
+	board.set<King>({ File::e, Rank::r1 }, Side::white);
+	board.set<Rook>({ File::a, Rank::r1 }, Side::white);
+	board.set<Rook>({ File::h, Rank::r1 }, Side::white);
 
 	board.print();
-	printMoves(board, { 4, 7 });
+	printMoves(board, { File::e, Rank::r1 });
 
-	// board.move({ 4, 7 }, { .coord = {6, 7}, .special = Special::kingside_castle });
-	board.move({ 4, 7 }, { .coord = {2, 7}, .special = Special::queenside_castle });
+	// board.move({ 4, 7 }, { .coord = {File::g, Rank::r1}, .special = Special::kingside_castle });
+	board.move({ File::e, Rank::r1 }, { .to = {File::c, Rank::r1}, .special = Special::queenside_castle });
 
 	board.print();
-	printMoves(board, { 2, 7 });
+	printMoves(board, { File::c, Rank::r1 });
 
 	//std::cout << "Enter a move: ";
 	//std::string move{};

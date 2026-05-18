@@ -3,7 +3,7 @@
 
 #include <array>
 
-struct Coord
+struct Dir
 {
 	int x{};
 	int y{};
@@ -61,6 +61,9 @@ struct Square
 {
 	File file{};
 	Rank rank{};
+
+	Square(File f, Rank r) : file{ f }, rank{ r } {}
+	Square(int f, int r) : file{ static_cast<File>(f) }, rank{ static_cast<Rank>(r) } {}
 };
 
 enum class Side
@@ -88,7 +91,7 @@ enum class Check
 
 struct Move
 {
-	Coord coord{};
+	Square to;
 	bool takes{false};
 	Check isCheck{Check::none};
 	Special special{ Special::none };

@@ -10,44 +10,46 @@
 
 class Piece;
 
-std::size_t getPosition(Coord coord);
+std::size_t getIndex(Square square);
 
 class Board
 {
 public:
 	template<typename T>
-	void set(Coord coord, Side side);
+	void set(Square square, Side side);
 
-	void move(Coord from, const Move& move);
+	void move(Square from, const Move& move);
+	void movePiece(Square from, Square to);
 
 	void reset();
 	void setup();
-	
-	bool isEmpty(Coord coord) const { return (m_board[getPosition(coord)] == nullptr); }
-	const Piece* getPiece(Coord coord) const { return m_board[getPosition(coord)].get(); }
-	std::optional<Coord> getEnPassant() const { return m_en_passant; }
+
+	bool isEmpty(Square square) const { return (m_board[getIndex(square)] == nullptr); }
+
+	Piece* getPiece(Square square) const { return m_board[getIndex(square)].get(); }
+	std::optional<Square> getEnPassant() const { return m_en_passant; }
 	Board() { reset(); setup(); };
 
 	void print();
 private:
 	std::array<std::unique_ptr<Piece>, Rank::max_ranks * File::max_files> m_board;
-	std::optional<Coord> m_en_passant{};
+	std::optional<Square> m_en_passant{};
 	template <typename T>
-	void placePair(int xpos, int row, Side side);
+	void placePair(File file, Rank rank, Side side);
 };
 
 template<typename T>
-void Board::set(Coord coord, Side side)
+void Board::set(Square square, Side side)
 {
-	m_board[getPosition(coord)] = std::make_unique<T>(side);
+	m_board[getIndex(square)] = std::make_unique<T>(side);
 }
 
 // Helper function for board setup
 template <typename T>
-void Board::placePair(int xpos, int row, Side side)
+void Board::placePair(File file, Rank rank, Side side)
 {
-	Board::set<T>({ xpos, row }, side);
-	Board::set<T>({ 7 - xpos, row }, side);
+	Board::set<T>({ file, rank }, side);
+	Board::set<T>({ (File::max_files - 1) - file, rank }, side);
 }
 
 #endif 

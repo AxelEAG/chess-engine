@@ -10,7 +10,7 @@ class Piece
 public:
 	virtual ~Piece() = default;
 
-	virtual std::vector<Move> getValidMoves(const Board& board, Coord position) const = 0;
+	virtual std::vector<Move> getValidMoves(const Board& board, Square from) const = 0;
 	virtual Pieces::Type getType() const = 0;
 	char getSymbol() const { return Pieces::symbol[getType()]; }
 	Side getSide()   const { return m_side; }

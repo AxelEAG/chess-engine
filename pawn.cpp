@@ -3,19 +3,19 @@
 #include "pawn.h"
 #include <vector>
 
-std::vector<Move> Pawn::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> Pawn::getValidMoves(const Board& board, Square from) const
 {
 	// TODO: Checkmate
 	std::vector<Move> moves{};
-	int forward		 { (getSide() == Side::white ? -1 : 1)};
-	int startRow	 { (getSide() == Side::white ?  6 : 1) };
-	int lastRow		 { (getSide() == Side::white ?  0 : 7) };
+	int forward{ (getSide() == Side::white ? -1 : 1) };
+	Rank startRank{ (getSide() == Side::white ? Rank::r2 : Rank::r7) };
+	Rank lastRank{ (getSide() == Side::white ? Rank::r8 : Rank::r1) };
 
-	auto isCheck = [&](Coord c) {
-		for (Coord coord : { Coord { c.x - 1, c.y + forward }, 
-							 Coord { c.x + 1, c.y + forward } })
+	auto isCheck = [&](Square s) {
+		for (Square square : {	Square{ s.file - 1, s.rank + forward },
+			Square{ s.file + 1, s.rank + forward }})
 		{
-			auto piece{ board.getPiece(coord) };
+			auto piece{ board.getPiece(square) };
 			if (piece)
 			{
 				if ((piece->getSide() != getSide()) && (piece->is(Pieces::king)))
@@ -24,32 +24,32 @@ std::vector<Move> Pawn::getValidMoves(const Board& board, Coord position) const
 			}
 		}
 		return Check::none;
-	};
-	auto isPromotion = [&](Coord c) { return (c.y == lastRow ? Special::promotion : Special::none); };
+		};
+	auto isPromotion = [&](Square s) { return (s.rank == lastRank ? Special::promotion : Special::none); };
 
-	Coord next{ position.x, position.y + forward};
-	if (board.isEmpty(next))
-		moves.push_back({ .coord=next, .isCheck=isCheck(next), .special=isPromotion(next)});
+	Square infront{ from.file, from.rank + forward };
+	if (board.isEmpty(infront))
+		moves.push_back({ .to = infront, .isCheck = isCheck(infront), .special = isPromotion(infront) });
 
-	Coord next2{ position.x, position.y + 2 * forward };
-	if (position.y == startRow && board.isEmpty(next2))
-		moves.push_back({ .coord=next2, .isCheck=isCheck(next2), .special = Special::double_step});
+	Square doublestep{ Square{from.file, from.rank + 2 * forward} };
+	if (from.rank == startRank && board.isEmpty(doublestep))
+		moves.push_back({ .to = doublestep, .isCheck = isCheck(doublestep), .special = Special::double_step });
 
 	// Check if can eat on the sides
-	for (Coord coord : { Coord{ position.x - 1, position.y + forward }, 
-						 Coord{ position.x + 1, position.y + forward } })
+	for (Square square : {   Square{ from.file - 1, from.rank + forward },
+							 Square{ from.file + 1, from.rank + forward}})
 	{
-		auto piece{ board.getPiece(coord) };
+		auto piece{ board.getPiece(square) };
 		if (piece && piece->getSide() != getSide())
-			moves.push_back({ .coord = coord, .takes = true, .isCheck = isCheck(coord), .special = isPromotion(coord) });
+			moves.push_back({ .to = square, .takes = true, .isCheck = isCheck(square), .special = isPromotion(square) });
 
 		auto en_passant{ board.getEnPassant() };
-		Coord pos_enemy{ coord.x, position.y };
+		Square pos_enemy{ square.file, from.rank };
 		if (!piece 
 			&& en_passant 
-			&& pos_enemy.x == en_passant->x 
-			&& pos_enemy.y == en_passant->y)
-			moves.push_back({ .coord = coord, .takes = true, .isCheck = isCheck(coord), .special = Special::en_passant });
+			&& pos_enemy.file == en_passant->file 
+			&& pos_enemy.rank == en_passant->rank)
+			moves.push_back({ .to = square, .takes = true, .isCheck = isCheck(square), .special = Special::en_passant });
 	}
 
 	return moves;

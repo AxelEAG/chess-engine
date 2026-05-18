@@ -10,16 +10,16 @@ class Board;
 class Bishop : public Piece
 {
 public:
-	std::vector<Move> getValidMoves(const Board& board, Coord position) const override;
+	std::vector<Move> getValidMoves(const Board& board, Square from) const override;
 	Pieces::Type getType() const override { return Pieces::bishop; }
 	Bishop(Side side) : Piece{ side } {}
 
 private:
 	static constexpr std::array dirs{
-		Coord {-1,  1},
-		Coord {-1, -1},
-		Coord { 1, -1},
-		Coord { 1,  1}
+		Dir {-1,  1},
+		Dir {-1, -1},
+		Dir { 1, -1},
+		Dir { 1,  1}
 	};
 };
 

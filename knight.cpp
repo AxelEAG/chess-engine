@@ -3,22 +3,22 @@
 #include "knight.h"
 #include <vector>
 
-std::vector<Move> Knight::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> Knight::getValidMoves(const Board& board, Square from) const
 {
 	std::vector<Move> moves{};
 	auto walk = [&](int dx, int dy)
 		{
-			int x{ position.x + dx };
-			if (x < 0 || x >= Board::numCols) return;
-			int y{ position.y + dy };
-			if (y < 0 || y >= Board::numRows) return;
+			int file{ from.file + dx };
+			if (file < File::a  || file >= File::max_files) return;
+			int rank{ from.rank + dy };
+			if (rank < Rank::r8 || rank >= Rank::max_ranks) return;
 
-			Coord to{ x, y };
+			Square to{file, rank };
 			Move move{ to };
 			if (!board.isEmpty(to))
 			{
 				if (board.getPiece(to)->getSide() != getSide())
-					moves.push_back(move);
+					moves.push_back({ .to = to, .takes = true });
 			} 
 			else
 				moves.push_back(move);

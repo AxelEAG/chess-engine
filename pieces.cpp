@@ -6,51 +6,50 @@
 
 #include <vector>
 
-static void walk(const Board& board, std::vector<Move>& moves, Coord position, Coord dir, Side side)
+static void walk(const Board& board, std::vector<Move>& moves, Square from, Dir dir, Side side)
 {
-	int x{ position.x + dir.x };
-	int y{ position.y + dir.y };
+	int file{ from.file + dir.x };
+	int rank{ from.rank + dir.y };
 
-	while (x >= 0 && x < Board::numCols
-		&& y >= 0 && y < Board::numRows)
+	while (file >= File::a  && file < File::max_files
+		&& rank >= Rank::r8 && rank < Rank::max_ranks)
 	{
-		Coord to{ x, y };
-		Move move{ to };
+		Square to{ file, rank };
 		if (!board.isEmpty(to))
 		{
 			if (board.getPiece(to)->getSide() != side)
-				moves.push_back(move);
+				moves.push_back({.to=to, .takes = true});
 			break;
 		}
-		moves.push_back(move);
-		x += dir.x;
-		y += dir.y;
+		moves.push_back({to});
+		file += dir.x;
+		rank += dir.y;
 	}
 }
 
-std::vector<Move> Rook::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> Rook::getValidMoves(const Board& board, Square from) const
 {
 	std::vector<Move> moves{};
 	for (auto dir : Rook::dirs)
-		walk(board, moves, position, dir, getSide());
+		walk(board, moves, from, dir, getSide());
 
 	return moves;
 }
 
-std::vector<Move> Bishop::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> Bishop::getValidMoves(const Board& board, Square from) const
 {
 	std::vector<Move> moves{};
 	for (auto dir : Bishop::dirs)
-		walk(board, moves, position, dir, getSide());
+		walk(board, moves, from, dir, getSide());
 
 	return moves;
 }
 
-std::vector<Move> Queen::getValidMoves(const Board& board, Coord position) const
+std::vector<Move> Queen::getValidMoves(const Board& board, Square from) const
 {
 	std::vector<Move> moves{};
 	for (auto dir : Queen::dirs)
-		walk(board, moves, position, dir, getSide());
+		walk(board, moves, from, dir, getSide());
 
 	return moves;
 }
