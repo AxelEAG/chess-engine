@@ -7,9 +7,9 @@ std::vector<Move> Pawn::getValidMoves(const Board& board, Coord position) const
 {
 	// TODO: Checkmate
 	std::vector<Move> moves{};
-	int forward		 { (m_side == Side::white ? -1 : 1) };
-	int startRow	 { (m_side == Side::white ?  6 : 1) };
-	int lastRow		 { (m_side == Side::white ?  0 : 7) };
+	int forward		 { (getSide() == Side::white ? -1 : 1)};
+	int startRow	 { (getSide() == Side::white ?  6 : 1) };
+	int lastRow		 { (getSide() == Side::white ?  0 : 7) };
 
 	auto isCheck = [&](Coord c) {
 		for (Coord coord : { Coord { c.x - 1, c.y + forward }, 
@@ -18,7 +18,7 @@ std::vector<Move> Pawn::getValidMoves(const Board& board, Coord position) const
 			auto piece{ board.getPiece(coord) };
 			if (piece)
 			{
-				if ((piece->getSide() != m_side) && (piece->getSymbol() == 'K'))
+				if ((piece->getSide() != getSide()) && (piece->is(Pieces::king)))
 					return Check::check;
 				//TODO: Check for mate?
 			}
@@ -40,7 +40,7 @@ std::vector<Move> Pawn::getValidMoves(const Board& board, Coord position) const
 						 Coord{ position.x + 1, position.y + forward } })
 	{
 		auto piece{ board.getPiece(coord) };
-		if (piece && piece->getSide() != m_side)
+		if (piece && piece->getSide() != getSide())
 			moves.push_back({ .coord = coord, .takes = true, .isCheck = isCheck(coord), .special = isPromotion(coord) });
 
 		auto en_passant{ board.getEnPassant() };

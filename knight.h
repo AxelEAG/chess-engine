@@ -12,11 +12,10 @@ class Knight : public Piece
 public:
 
 	std::vector<Move> getValidMoves(const Board& board, Coord position) const override;
-	char getSymbol() const override { return symbol; }
+	Pieces::Type getType() const override { return Pieces::knight; }
 	Knight(Side side) : Piece{ side } {}
 
 private:
-	static constexpr char symbol{ 'N' };
 	static constexpr std::array dirs{
 		Coord { 1,  2},
 		Coord { 1, -2},

@@ -32,7 +32,7 @@ std::vector<Move> Rook::getValidMoves(const Board& board, Coord position) const
 {
 	std::vector<Move> moves{};
 	for (auto dir : Rook::dirs)
-		walk(board, moves, position, dir, m_side);
+		walk(board, moves, position, dir, getSide());
 
 	return moves;
 }
@@ -41,7 +41,7 @@ std::vector<Move> Bishop::getValidMoves(const Board& board, Coord position) cons
 {
 	std::vector<Move> moves{};
 	for (auto dir : Bishop::dirs)
-		walk(board, moves, position, dir, m_side);
+		walk(board, moves, position, dir, getSide());
 
 	return moves;
 }
@@ -50,7 +50,7 @@ std::vector<Move> Queen::getValidMoves(const Board& board, Coord position) const
 {
 	std::vector<Move> moves{};
 	for (auto dir : Queen::dirs)
-		walk(board, moves, position, dir, m_side);
+		walk(board, moves, position, dir, getSide());
 
 	return moves;
 }

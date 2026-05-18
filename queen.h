@@ -11,11 +11,10 @@ class Queen : public Piece
 {
 public:
 	std::vector<Move> getValidMoves(const Board& board, Coord position) const override;
-	char getSymbol() const override { return symbol; }
+	Pieces::Type getType() const override { return Pieces::queen; }
 	Queen(Side side) : Piece{ side } {}
 
 private:
-	static constexpr char symbol{ 'Q' };
 	static constexpr std::array dirs{
 		Coord { 1,  0},
 		Coord {-1,  0},

@@ -43,7 +43,7 @@ void Board::move(Coord from, const Move& move)
 
 	m_en_passant.reset(); // en passant only lasts one turn
 	auto piece{ m_board[getPosition(from)].get() };
-	if (piece && (piece->getSymbol() == 'K' || piece->getSymbol() == 'R') && !piece->hasMoved()) piece->setMoved();
+	if (piece && (piece->is(Pieces::king) || piece->is(Pieces::rook)) && !piece->hasMoved()) piece->setMoved();
 	// TODO: take the piece (although by default as it's unique ptrs, they already behave as if they did)
 
 }

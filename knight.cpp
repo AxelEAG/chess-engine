@@ -17,7 +17,7 @@ std::vector<Move> Knight::getValidMoves(const Board& board, Coord position) cons
 			Move move{ to };
 			if (!board.isEmpty(to))
 			{
-				if (board.getPiece(to)->getSide() != m_side)
+				if (board.getPiece(to)->getSide() != getSide())
 					moves.push_back(move);
 			} 
 			else

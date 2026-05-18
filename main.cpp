@@ -120,6 +120,7 @@ int main()
 	board.move({ 4, 7 }, { .coord = {2, 7}, .special = Special::queenside_castle });
 
 	board.print();
+	printMoves(board, { 2, 7 });
 
 	//std::cout << "Enter a move: ";
 	//std::string move{};

@@ -17,7 +17,7 @@ std::vector<Move> King::getValidMoves(const Board& board, Coord position) const
 			Coord to{ x, y };
 			if (!board.isEmpty(to))
 			{
-				if (board.getPiece(to)->getSide() != m_side)
+				if (board.getPiece(to)->getSide() != getSide())
 					moves.push_back({ .coord = to, .takes = true });
 			} 
 			else
@@ -37,8 +37,8 @@ std::vector<Move> King::getValidMoves(const Board& board, Coord position) const
 		{
 			auto piece{ board.getPiece({position.x + 3, position.y}) };
 			if (piece && 
-				piece->getSymbol() == 'R' && 
-				piece->getSide() == m_side && 
+				piece->is(Pieces::rook) && 
+				piece->getSide() == getSide() &&
 				!(piece->hasMoved()))
 				moves.push_back({ .coord = {6, position.y}, .special = Special::kingside_castle });
 			// TODO: Add check if castling makes a check
@@ -52,8 +52,8 @@ std::vector<Move> King::getValidMoves(const Board& board, Coord position) const
 		{
 			auto piece{ board.getPiece({position.x - 4, position.y}) };
 			if (piece &&
-				piece->getSymbol() == 'R' &&
-				piece->getSide() == m_side &&
+				piece->is(Pieces::rook) &&
+				piece->getSide() == getSide() &&
 				!(piece->hasMoved()))
 				moves.push_back({ .coord = {2, position.y}, .special = Special::queenside_castle });
 			// TODO: Add check if castling makes a check
