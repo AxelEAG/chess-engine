@@ -27,6 +27,42 @@ namespace Pieces
 	static_assert(symbol.size() == max_pieces);
 }
 
+enum Rank 
+{
+	r8,
+	r7,
+	r6,
+	r5,
+	r4,
+	r3,
+	r2,
+	r1,
+	max_ranks
+};
+
+constexpr std::array ranks{ '8', '7', '6', '5', '4', '3', '2', '1' };
+
+enum File 
+{
+	a,
+	b,
+	c,
+	d,
+	e,
+	f,
+	g,
+	h,
+	max_files
+};
+
+constexpr std::array files{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+
+struct Square
+{
+	File file{};
+	Rank rank{};
+};
+
 enum class Side
 {
 	white,

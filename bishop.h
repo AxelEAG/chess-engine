@@ -16,10 +16,10 @@ public:
 
 private:
 	static constexpr std::array dirs{
-		Coord { 1,  1},
+		Coord {-1,  1},
 		Coord {-1, -1},
 		Coord { 1, -1},
-		Coord {-1,  1}
+		Coord { 1,  1}
 	};
 };
 

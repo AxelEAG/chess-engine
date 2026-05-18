@@ -15,10 +15,6 @@ std::size_t getPosition(Coord coord);
 class Board
 {
 public:
-	static constexpr std::size_t numRows{ 8 };
-	static constexpr std::size_t numCols{ 8 };
-	static constexpr std::array<char, numCols> colSymbol{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
-
 	template<typename T>
 	void set(Coord coord, Side side);
 
@@ -34,7 +30,7 @@ public:
 
 	void print();
 private:
-	std::array<std::unique_ptr<Piece>, numRows * numCols> m_board;
+	std::array<std::unique_ptr<Piece>, Rank::max_ranks * File::max_files> m_board;
 	std::optional<Coord> m_en_passant{};
 	template <typename T>
 	void placePair(int xpos, int row, Side side);
