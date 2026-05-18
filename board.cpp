@@ -68,8 +68,8 @@ void Board::setup()
 		set<Queen>({ File::d, majorRank }, side);
 		set<King> ({ File::e, majorRank }, side);
 
-		for (std::size_t file{ File::a }; file < File::max_files; ++file)
-			set<Pawn>({ static_cast<File>(file), pawnRank }, side);
+		for (int file{ File::a }; file < File::max_files; ++file)
+			set<Pawn>({ file, pawnRank }, side);
 	}
 }
 
@@ -81,7 +81,7 @@ void Board::print()
 	{
 		for (std::size_t file{ File::a }; file < File::max_files; ++file)
 		{
-			auto& piece = m_board[File::max_files * rank + file];
+			auto& piece = m_board[Rank::max_ranks * rank + file];
 			char symbol{ piece ? piece->getSymbol() : '-' };
 			if (piece && piece->getSide() == Side::black) symbol = std::tolower(symbol);
 			std::cout << symbol << ' ';
@@ -89,7 +89,7 @@ void Board::print()
 		std::cout << '|' << rowNumber-- << '\n';
 	}
 
-	for (int rank{ Rank::r8 }; rank < Rank::max_ranks; ++rank)
+	for (int file{ File::a }; file < File::max_files; ++file)
 		std::cout << "--";
 	std::cout << '\n';
 

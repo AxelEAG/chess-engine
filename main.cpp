@@ -48,6 +48,9 @@ std::string stringifyMove(char symbol, Square from, const Move& move)
 		sMove += '='; // TODO: Add which piece
 	}
 
+	if (move.promote_to != Pieces::none)
+		sMove += Pieces::symbol[move.promote_to];
+
 	if (move.isCheck == Check::check)
 		sMove += '+';
 	if (move.isCheck == Check::checkmate)
@@ -109,18 +112,21 @@ int main()
 	board.reset();
 	board.print();
 
-	board.set<King>({ File::e, Rank::r1 }, Side::white);
-	board.set<Rook>({ File::a, Rank::r1 }, Side::white);
-	board.set<Rook>({ File::h, Rank::r1 }, Side::white);
+	board.set<Pawn>({ File::c, Rank::r7 }, Side::white);
+	printMoves(board, { File::c, Rank::r7 });
 
-	board.print();
-	printMoves(board, { File::e, Rank::r1 });
+	//board.set<King>({ File::e, Rank::r1 }, Side::white);
+	//board.set<Rook>({ File::a, Rank::r1 }, Side::white);
+	//board.set<Rook>({ File::h, Rank::r1 }, Side::white);
 
-	// board.move({ 4, 7 }, { .coord = {File::g, Rank::r1}, .special = Special::kingside_castle });
-	board.move({ File::e, Rank::r1 }, { .to = {File::c, Rank::r1}, .special = Special::queenside_castle });
+	//board.print();
+	//printMoves(board, { File::e, Rank::r1 });
 
-	board.print();
-	printMoves(board, { File::c, Rank::r1 });
+	//// board.move({ 4, 7 }, { .coord = {File::g, Rank::r1}, .special = Special::kingside_castle });
+	//board.move({ File::e, Rank::r1 }, { .to = {File::c, Rank::r1}, .special = Special::queenside_castle });
+
+	//board.print();
+	//printMoves(board, { File::c, Rank::r1 });
 
 	//std::cout << "Enter a move: ";
 	//std::string move{};

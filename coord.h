@@ -18,11 +18,13 @@ namespace Pieces
 		bishop,
 		queen,
 		king,
-		max_pieces
+		max_pieces,
+		none
 	};
 
 	constexpr std::array type{ pawn, rook, knight, bishop, queen, king };
-	constexpr std::array symbol{ 'P', 'R', 'K', 'B', 'Q', 'K' };
+	constexpr std::array symbol{ 'P', 'R', 'N', 'B', 'Q', 'K' };
+	constexpr std::array to_promote{ rook, knight, bishop, queen };
 	static_assert(type.size() == max_pieces);
 	static_assert(symbol.size() == max_pieces);
 }
@@ -95,6 +97,7 @@ struct Move
 	bool takes{false};
 	Check isCheck{Check::none};
 	Special special{ Special::none };
+	Pieces::Type promote_to{Pieces::none};
 };
 
 #endif

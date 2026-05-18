@@ -25,11 +25,21 @@ std::vector<Move> Pawn::getValidMoves(const Board& board, Square from) const
 		}
 		return Check::none;
 		};
-	auto isPromotion = [&](Square s) { return (s.rank == lastRank ? Special::promotion : Special::none); };
 
 	Square infront{ from.file, from.rank + forward };
 	if (board.isEmpty(infront))
-		moves.push_back({ .to = infront, .isCheck = isCheck(infront), .special = isPromotion(infront) });
+	{
+		if (infront.rank == lastRank)
+		{
+			for (auto type : Pieces::to_promote)
+				moves.push_back({ .to = infront, .special = Special::promotion, .promote_to=type }); // add isCheck
+		}
+		else
+		{
+			moves.push_back({ .to = infront, .isCheck = isCheck(infront) });
+		}
+	}
+
 
 	Square doublestep{ Square{from.file, from.rank + 2 * forward} };
 	if (from.rank == startRank && board.isEmpty(doublestep))
@@ -41,7 +51,17 @@ std::vector<Move> Pawn::getValidMoves(const Board& board, Square from) const
 	{
 		auto piece{ board.getPiece(square) };
 		if (piece && piece->getSide() != getSide())
-			moves.push_back({ .to = square, .takes = true, .isCheck = isCheck(square), .special = isPromotion(square) });
+		{
+			if (square.rank == lastRank)
+			{
+				for (auto type : Pieces::to_promote)
+					moves.push_back({ .to = square, .takes = true, .special = Special::promotion, .promote_to = type }); // add isCheck
+			}
+			else
+			{
+				moves.push_back({ .to = square, .takes = true, .isCheck = isCheck(infront) });
+			}
+		}
 
 		auto en_passant{ board.getEnPassant() };
 		Square pos_enemy{ square.file, from.rank };
