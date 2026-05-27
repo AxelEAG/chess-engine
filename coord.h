@@ -2,6 +2,7 @@
 #define COORD_H
 
 #include <array>
+#include <optional>
 
 struct Dir
 {
@@ -64,6 +65,7 @@ struct Square
 	File file{};
 	Rank rank{};
 
+	Square() = default;
 	Square(File f, Rank r) : file{ f }, rank{ r } {}
 	Square(int f, int r) : file{ static_cast<File>(f) }, rank{ static_cast<Rank>(r) } {}
 };
@@ -98,6 +100,13 @@ struct Move
 	Check isCheck{Check::none};
 	Special special{ Special::none };
 	Pieces::Type promote_to{Pieces::none};
+};
+
+struct FullMove {
+	std::optional<File> fromFile{};
+	std::optional<Rank> fromRank{};
+	Pieces::Type piece{};
+	Move move;
 };
 
 #endif

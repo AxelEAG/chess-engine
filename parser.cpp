@@ -1,106 +1,88 @@
 #include <string_view>
 #include <optional>
-#include "Coord.h"
+#include "coord.h"
+#include "parser.h"
 
-class Parser
+
+bool Parser::consume(char expected)
 {
-public:
-    Parser(std::string_view s)
-        : m_input(s)
-    {
-    }
+    if (peek() != expected)
+        return false;
 
-    bool eof() const
-    {
-        return m_pos >= m_input.size();
-    }
+    ++m_pos;
+    return true;
+}
 
-    char peek() const
-    {
-        return eof() ? '\0' : m_input[m_pos];
-    }
+std::optional<File> Parser::parseFile()
+{
+    char c = peek();
 
-    bool consume(char expected)
-    {
-        if (peek() != expected)
-            return false;
+    if (c < 'a' || c > 'h')
+        return std::nullopt;
 
-        ++m_pos;
-        return true;
-    }
+    ++m_pos;
+    return static_cast<File>(c - 'a');
+}
 
-    std::optional<File> parseFile()
-    {
-        char c = peek();
+std::optional<Rank> Parser::parseRank()
+{
+    char c = peek();
 
-        if (c < 'a' || c > 'h')
-            return std::nullopt;
+    if (c < '1' || c > '8')
+        return std::nullopt;
 
-        ++m_pos;
-        return static_cast<File>(c - 'a');
-    }
+    ++m_pos;
+    return static_cast<Rank>(c - '1');
+}
 
-    std::optional<Rank> parseRank()
-    {
-        char c = peek();
+std::optional<Square> Parser::parseSquare()
+{
+    auto file = parseFile();
+    if (!file)
+        return std::nullopt;
 
-        if (c < '1' || c > '8')
-            return std::nullopt;
+    auto rank = parseRank();
+    if (!rank)
+        return std::nullopt;
 
-        ++m_pos;
-        return static_cast<Rank>(c - '1');
-    }
+    return Square{ *file, *rank };
+}
 
-    std::optional<Square> parseSquare()
-    {
-        auto file = parseFile();
-        if (!file)
-            return std::nullopt;
+void Parser::parseOptionalCheck(Move& move)
+{
+    if (consume('+'))
+        move.isCheck = Check::check;
+    else if (consume('#'))
+        move.isCheck = Check::checkmate;
+    else
+        move.isCheck = Check::none;
+}
 
-        auto rank = parseRank();
-        if (!rank)
-            return std::nullopt;
+std::optional<FullMove> Parser::parseMove()
+{
+    //if (auto move = parseCastle())
+    //    return move;
 
-        return Square{ *file, *rank };
-    }
+    if (auto move = parsePawnMove())
+        return move;
 
-private:
-    std::string_view m_input;
-    size_t m_pos{};
-};
+    //if (auto move = parsePieceMove())
+    //    return move;
 
+    return std::nullopt;
+}
 
-// Chess grammar
+std::optional<FullMove> parseFullMove(std::string_view text)
+{
+    Parser p{ text };
 
-// Move :=
-//  Castle 
-//  | PieceMove
-//  | PawnMove
-//
-// Castle :=
-//  "O-O"
-//  | "O-O-O"
-//
-// PawnMove :=
-//  Push := file rank Promotion? Check? 
-//  | Capture:= file 'x' file rank Promotion? Check?
-//  
-// PieceMove :=
-//  piece Disambiguation? Capture? square Check?
-//
-// Promotion: =
-//  "=" piece
-//
-// Capture :=
-//  "x"
-//
-// Check : =
-//  "+"
-//  | "#"
-//
-// square : =
-//  file rank
-//
-// file : = "a".."h"
-// rank : = "1".."8"
-// piece : = "N" | "B" | "R" | "Q" | "K"
+    auto move = p.parseMove();
+
+    if (!move)
+        return std::nullopt;
+
+    if (!p.eof())
+        return std::nullopt;
+
+    return move;
+}

@@ -6,12 +6,15 @@
 #include "queen.h"
 #include "king.h"
 #include "rook.h"
+#include "parser.h"
 
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <algorithm>
 #include <regex>
+#include <optional>
+#include <cassert>
 
 // Goal: Create a terminal version of chess
 // Display board
@@ -27,7 +30,6 @@
 
 std::string stringifyMove(char symbol, Square from, const Move& move)
 {
-	// TODO: Castling
 	if (move.special == Special::kingside_castle)
 		return "O-O";
 	if (move.special == Special::queenside_castle)
@@ -35,7 +37,12 @@ std::string stringifyMove(char symbol, Square from, const Move& move)
 
 	std::string sMove{};
 	if (symbol != 'P')
+	{
 		sMove += symbol;
+		// TODO: Add check if two pieces can get to the same place
+		// Adds file
+		// If same file, adds rank too
+	}
 	if (move.takes)
 	{
 		if (symbol == 'P') sMove += ('a' + from.file);
@@ -45,11 +52,9 @@ std::string stringifyMove(char symbol, Square from, const Move& move)
 	sMove += ranks[move.to.rank];
 	if (move.special == Special::promotion)
 	{
-		sMove += '='; // TODO: Add which piece
-	}
-
-	if (move.promote_to != Pieces::none)
+		sMove += '=';
 		sMove += Pieces::symbol[move.promote_to];
+	}
 
 	if (move.isCheck == Check::check)
 		sMove += '+';
@@ -77,21 +82,6 @@ void printMoves(Board& board, Square from)
 	std::cout << '\n';
 }
 
-bool isPiece(char c)
-{
-	static constexpr std::array pieces{ 'R', 'B', 'N', 'K', 'Q' };
-	return std::find(pieces.begin(), pieces.end(), c) == pieces.end();
-}
-
-bool isFile(char c)
-{
-	return (c >= 'a' && c <= 'h');
-}
-
-bool isRank(char c)
-{
-	return (c > '0' && c < '9');
-}
 
 bool isValidMove(const Board& board, std::string_view move)
 {
@@ -106,61 +96,138 @@ bool isValidMove(const Board& board, std::string_view move)
 	// When two of the same pieces can move to the same square, you add the file. If they are on the same file, you add the rank
 	return true;
 }
+
+
+// For simple testing (some are not legal but only checking valid syntax)
+constexpr std::array validPawnMoves{
+    // Simple pushes
+    "e4",
+    "a3",
+    "h8",
+
+    // Push + check/mate
+    "e4+",
+    "c7#",
+    "b8+",
+    "h1#",
+
+    // Captures
+    "exd5",
+    "axb3",
+    "hxg7",
+
+    // Capture + check/mate
+    "exd5+",
+    "axb8#",
+    "fxg1+",
+
+    // Promotions
+    "e8=Q",
+    "a1=N",
+    "h8=R",
+    "c1=B",
+
+    // Promotion + check/mate
+    "e8=Q+",
+    "a1=N#",
+    "fxg8=Q+",
+    "axb1=R#",
+
+    // Capture + promotion
+    "fxg8=Q",
+    "axb1=N",
+
+    // Capture + promotion + mate/check
+    "fxg8=Q#",
+    "axb1=B+"
+};
+
+constexpr std::array invalidPawnMoves{
+
+    // Empty/incomplete
+    "",
+    "e",
+    "x",
+    "=",
+
+    // Invalid files/ranks
+    "i4",
+    "e9",
+    "z2",
+    "a0",
+
+    // Bad captures
+    "ex",
+    "exd",
+    "xd5",
+    "ex9",
+    "exd9",
+    "exdd5",
+
+    // Bad promotions
+    "e8=",
+    "e8=K",      // illegal promotion piece
+    "e8=P",
+    "e8=X",
+    "e8=QQ",
+    "e8==Q",
+
+    // Bad suffixes
+    "e4++",
+    "e4##",
+    "e4+-",
+    "e4#asdf",
+
+    // Trailing garbage
+    "e4abc",
+    "exd5hello",
+    "e8=Qxyz",
+
+    // Malformed ordering
+    "e8+Q",
+    "e8Q",
+    "ex=d5",
+    "exd5=Q=R",
+
+    // Invalid pawn syntax
+    "Pe4",       // pawns don't use piece letters
+    "pxd5",
+
+    // Missing destination
+    "ex+",
+    "ax=",
+
+    // Garbage combinations
+    "////",
+    "123",
+    "abcdefgh"
+};
+
+std::optional<FullMove> parseFullMove(std::string_view text);
+
+
 int main()
 {
-	Board board{};
-	board.reset();
-	board.print();
-
-	board.set<Pawn>({ File::c, Rank::r7 }, Side::white);
-	printMoves(board, { File::c, Rank::r7 });
-
-	//board.set<King>({ File::e, Rank::r1 }, Side::white);
-	//board.set<Rook>({ File::a, Rank::r1 }, Side::white);
-	//board.set<Rook>({ File::h, Rank::r1 }, Side::white);
-
-	//board.print();
-	//printMoves(board, { File::e, Rank::r1 });
-
-	//// board.move({ 4, 7 }, { .coord = {File::g, Rank::r1}, .special = Special::kingside_castle });
-	//board.move({ File::e, Rank::r1 }, { .to = {File::c, Rank::r1}, .special = Special::queenside_castle });
-
-	//board.print();
-	//printMoves(board, { File::c, Rank::r1 });
-
-	//std::cout << "Enter a move: ";
-	//std::string move{};
-	//std::cin >> move;
-	//std::cout << move << " is " << (isValidMove(board, move) ? "" : "in") << "valid \n";
-
-	//board.setup();
+	//Board board{};
+	//board.reset();
 	//board.print();
 
-	//board.move({ 3,6 }, { Coord {3, 3} });
-	//board.print();
+	//board.set<Pawn>({ File::c, Rank::r7 }, Side::white);
+	//printMoves(board, { File::c, Rank::r7 });
+
+    for (std::string_view move : validPawnMoves)
+    {
+        auto result = parseFullMove(move);
+        if (!result) 
+            std::cerr << "Expected valid pawn move: " << move << '\n';
+    }
+
+    for (std::string_view move : invalidPawnMoves)
+    {
+        auto result = parseFullMove(move);
+        if (result)
+            std::cerr << "Expected invalid pawn move: " << move << '\n';
+    }
 
 
-
-	//board.move({ 2, 1 }, { .coord = Coord {2, 3}, .special = Special::double_step });
-	//board.print();
-
-	//std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
-	//printMoves(board, { 3, 3 });
-	//board.move({ 3, 3 }, { .coord = Coord {2, 2}, .takes=true, .special = Special::en_passant });
-	//board.print();
-	//std::cout << "Can enpassant: " << (board.getEnPassant() ? "true" : "false") << '\n';
-
-	// Queen checking
-	
-	//board.set<Queen>({ 4, 4 }, Side::black);
-	//board.print();
-	//printMoves(board, { 4, 4 });
-
-	//board.set<Pawn>({ 5, 5 }, Side::white);
-	//board.print();
-	//printMoves(board, { 5, 5 });
-
-	//board.set<King>({ 5, 3 }, Side::black);
-	//board.print();
-	//printMoves(board, { 5, 5 });
 }
