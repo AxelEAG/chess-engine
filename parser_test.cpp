@@ -241,9 +241,73 @@ constexpr std::array invalidPieceMoves{
     "abcdefgh",
 };
 
+constexpr std::array validCastleMoves{
+    "O-O",
+    "O-O-O",
+
+    // Check / mate
+    "O-O+",
+    "O-O#",
+    "O-O-O+",
+    "O-O-O#"
+};
+
+constexpr std::array invalidCastleMoves{
+    // Empty/incomplete
+    "",
+    "O",
+    "O-",
+    "O-O-",
+    "O-O-O-",
+
+    // Wrong characters
+    "0-0",
+    "0-0-0",
+    "o-o",
+    "o-o-o",
+
+    // Missing separators
+    "OO",
+    "OOO",
+    "OOOO",
+
+    // Malformed separators
+    "O--O",
+    "O---O",
+    "O--O-O",
+    "O-O--O",
+
+    // Invalid ordering
+    "-O-O",
+    "O-O-OO",
+    "OO-O",
+
+    // Trailing garbage
+    "O-Oabc",
+    "O-O-Ohello",
+    "O-O+#",
+
+    // Invalid suffixes
+    "O-O++",
+    "O-O##",
+    "O-O+-",
+    "O-O-O#+",
+
+    // Piece/pawn syntax mixed in
+    "KO-O",
+    "O-O=Q",
+    "OxO",
+
+    // Garbage
+    "////",
+    "123",
+    "castle"
+};
+
+
 void testMoves(std::string_view test_name, auto moves, bool isPass)
 {
-    std::cout << "===== " << std::format("Starting {:^20} test", test_name) << " =====" << '\n';
+    std::cout << std::format("========== {:^25} ==========", test_name) << '\n';
     int count{ 0 };
     for (std::size_t i{ 0 }; i < moves.size(); ++i)
     {
@@ -260,8 +324,10 @@ void testMoves(std::string_view test_name, auto moves, bool isPass)
 
 void tester()
 {
-    testMoves("Valid Pawn Moves", validPawnMoves, true);
-    testMoves("Invalid Pawn Moves", invalidPawnMoves, false);
-    testMoves("Valid Piece Moves", validPieceMoves, true);
-    testMoves("Invalid Piece Moves",invalidPieceMoves, false);
+    testMoves("Valid Pawn Moves Test"    , validPawnMoves    , true);
+    testMoves("Invalid Pawn Moves Test"  , invalidPawnMoves  , false);
+    testMoves("Valid Piece Moves Test"   , validPieceMoves   , true);
+    testMoves("Invalid Piece Moves Test" , invalidPieceMoves , false);
+    testMoves("Valid Castle Moves Test"  , validCastleMoves  , true);
+    testMoves("Invalid Castle Moves Test", invalidCastleMoves, false);
 }

@@ -11,10 +11,6 @@ std::optional<FullMove> Parser::parseCastle()
     if (!consume('O'))
         return std::nullopt;
 
-    auto piece = parsePiece();
-    if (!piece)
-        return std::nullopt;
-
     FullMove move{};
     move.piece = Pieces::king;
     move.fromFile = File::e;
@@ -34,5 +30,4 @@ std::optional<FullMove> Parser::parseCastle()
     parseOptionalCheck(move.move);
 
     return move;
-
 }
