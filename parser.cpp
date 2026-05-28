@@ -48,7 +48,7 @@ std::optional<Square> Parser::parseSquare()
     return Square{ *file, *rank };
 }
 
-void Parser::parseOptionalCheck(Move& move)
+void Parser::parseOptionalCheck(ParsedMove& move)
 {
     if (consume('+'))
         move.isCheck = Check::check;
@@ -58,7 +58,7 @@ void Parser::parseOptionalCheck(Move& move)
         move.isCheck = Check::none;
 }
 
-std::optional<FullMove> Parser::parseMove()
+std::optional<ParsedMove> Parser::parseMove()
 {
     if (auto move = parseCastle())
         return move;
@@ -72,7 +72,7 @@ std::optional<FullMove> Parser::parseMove()
     return std::nullopt;
 }
 
-std::optional<FullMove> parseFullMove(std::string_view text)
+std::optional<ParsedMove> parseMove(std::string_view text)
 {
     Parser p{ text };
 

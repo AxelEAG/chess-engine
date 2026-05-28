@@ -2,7 +2,7 @@
 #include "coord.h"
 #include "parser.h"
 
-std::optional<FullMove> Parser::parseCastle()
+std::optional<ParsedMove> Parser::parseCastle()
 {
     if (!consume('O'))
         return std::nullopt;
@@ -11,7 +11,7 @@ std::optional<FullMove> Parser::parseCastle()
     if (!consume('O'))
         return std::nullopt;
 
-    FullMove move{};
+    ParsedMove move{};
     move.piece = Pieces::king;
     move.fromFile = File::e;
 
@@ -21,13 +21,13 @@ std::optional<FullMove> Parser::parseCastle()
         if (!consume('O'))
             return std::nullopt;
 
-        move.move.special = Special::queenside_castle;
+        move.special = Special::queenside_castle;
     }
     // Kingside castle
     else
-        move.move.special = Special::kingside_castle;
+        move.special = Special::kingside_castle;
 
-    parseOptionalCheck(move.move);
+    parseOptionalCheck(move);
 
     return move;
 }

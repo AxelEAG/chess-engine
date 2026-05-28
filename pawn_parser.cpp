@@ -28,7 +28,7 @@ std::optional<Pieces::Type> Parser::parsePromotionPiece()
 }
 
 // true if no promotion OR successful promotion
-bool Parser::parseOptionalPromotion(Move& move)
+bool Parser::parseOptionalPromotion(ParsedMove& move)
 {
     if (!consume('='))
         return true;
@@ -42,13 +42,13 @@ bool Parser::parseOptionalPromotion(Move& move)
     return true;
 }
 
-std::optional<FullMove> Parser::parsePawnMove()
+std::optional<ParsedMove> Parser::parsePawnMove()
 {
     auto file = parseFile();
     if (!file)
         return std::nullopt;
 
-    FullMove move{};
+    ParsedMove move{};
     move.piece = Pieces::pawn;
 
     // Check capture
@@ -60,19 +60,19 @@ std::optional<FullMove> Parser::parsePawnMove()
             return std::nullopt;
 
         move.fromFile = *file;
-        move.move.to = *to;
-        move.move.takes = true;
+        move.to = *to;
+        move.takes = true;
     }
     // Check simple move
     else if (auto rank = parseRank())
-        move.move.to = Square{ *file, *rank };
+        move.to = Square{ *file, *rank };
     else
         return std::nullopt;
     
-    if (!parseOptionalPromotion(move.move))
+    if (!parseOptionalPromotion(move))
         return std::nullopt;
 
-    parseOptionalCheck(move.move);
+    parseOptionalCheck(move);
 
     return move;
 

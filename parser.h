@@ -23,15 +23,15 @@ public:
     std::optional<Square> parseSquare();
     std::optional<Pieces::Type> parsePiece();
 
-    void parseOptionalCheck(Move& move);
-    std::optional<FullMove> parseMove();
+    void parseOptionalCheck(ParsedMove& move);
+    std::optional<ParsedMove> parseMove();
 
-    std::optional<FullMove> parseCastle();
-    std::optional<FullMove> parsePieceMove();
+    std::optional<ParsedMove> parseCastle();
+    std::optional<ParsedMove> parsePieceMove();
 
     std::optional<Pieces::Type> parsePromotionPiece();
-    bool parseOptionalPromotion(Move& move);
-    std::optional<FullMove> parsePawnMove();
+    bool parseOptionalPromotion(ParsedMove& move);
+    std::optional<ParsedMove> parsePawnMove();
 
 private:
     std::string_view m_input;

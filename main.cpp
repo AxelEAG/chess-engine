@@ -81,13 +81,43 @@ void printMoves(Board& board, Square from)
 }
 
 void tester();
+std::optional<ParsedMove> parseMove(std::string_view text);
 
+std::optional<ParsedMove> validateMove(Board& board, ParsedMove& move)
+{
+	// Validate:
+	// Can the right piece move there?
+
+	// TODO:
+	// Is there ambiguity and is it addressed?
+	// Is there a check and is it represented?
+	// Is there a promotion and is it represented?
+}
 int main()
 {
 	//Board board{};
-	//board.reset();
-	//board.print();
+	//Side side = Side::white;
+	//auto toggleSide = [&side]() { (side == Side::white) ? Side::black : Side::white; };
 
+	//std::cout << "Let's play some chess! \n \n";
+	//while (true)
+	//{
+	//	board.print();
+	//	//while (true)
+	//	//{
+	//	//	std::cout << "Enter your move: ";
+	//	//	std::string input{};
+	//	//	std::cin >> input;
+	//	//	auto move = parseMove(input);
+	//	//	if (!move)
+	//	//		continue;
+
+	//	//	board.move(*move);
+
+	//	//}
+
+	//	toggleSide();
+	//}
 	//board.set<Pawn>({ File::c, Rank::r7 }, Side::white);
 	//printMoves(board, { File::c, Rank::r7 });
 	

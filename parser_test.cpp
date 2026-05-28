@@ -7,7 +7,7 @@
 
 #include "coord.h"
 
-std::optional<FullMove> parseFullMove(std::string_view text);
+std::optional<ParsedMove> parseMove(std::string_view text);
 
 
 // For simple testing (some are not legal but only checking valid syntax)
@@ -312,13 +312,13 @@ void testMoves(std::string_view test_name, auto moves, bool isPass)
     for (std::size_t i{ 0 }; i < moves.size(); ++i)
     {
         std::string_view move = moves[i];
-        auto result = parseFullMove(move);
+        auto result = parseMove(move);
         if (isPass == !result)
             std::cerr << "Test #" << i + 1 << ": Expected move to be " << (isPass ? "" : "in") << "valid: " << move << '\n';
         else
             ++count;
     }
-    std::cout << '[' << count << '/' << moves.size() << ']' << " tests passed. \n \n";
+    std::cout << '[' << count << '/' << moves.size() << ']' << " Tests passed. \n \n";
 
 }
 
