@@ -66,8 +66,8 @@ std::optional<FullMove> Parser::parseMove()
     if (auto move = parsePawnMove())
         return move;
 
-    //if (auto move = parsePieceMove())
-    //    return move;
+    if (auto move = parsePieceMove())
+        return move;
 
     return std::nullopt;
 }

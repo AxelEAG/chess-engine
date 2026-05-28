@@ -21,9 +21,12 @@ public:
     std::optional<File>   parseFile();
     std::optional<Rank>   parseRank();
     std::optional<Square> parseSquare();
+    std::optional<Pieces::Type> parsePiece();
 
     void parseOptionalCheck(Move& move);
     std::optional<FullMove> parseMove();
+
+    std::optional<FullMove> parsePieceMove();
 
     std::optional<Pieces::Type> parsePromotionPiece();
     bool parseOptionalPromotion(Move& move);
@@ -35,3 +38,38 @@ private:
 };
 
 #endif
+
+// Chess grammar
+
+// Move :=
+//  Castle 
+//  | PieceMove
+//  | PawnMove
+//
+// Castle :=
+//  "O-O"
+//  | "O-O-O"
+//
+// PawnMove :=
+//  Push := file rank Promotion? Check? 
+//  | Capture:= file 'x' file rank Promotion? Check?
+//  
+// PieceMove :=
+//  piece Disambiguation? Capture? square Check?
+//
+// Promotion: =
+//  "=" piece
+//
+// Capture :=
+//  "x"
+//
+// Check : =
+//  "+"
+//  | "#"
+//
+// square : =
+//  file rank
+//
+// file : = "a".."h"
+// rank : = "1".."8"
+// piece : = "N" | "B" | "R" | "Q" | "K"
