@@ -128,11 +128,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="board.cpp" />
+    <ClCompile Include="castle_parser.cpp" />
     <ClCompile Include="king.cpp" />
     <ClCompile Include="knight.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="parser.cpp" />
+    <ClCompile Include="parser_test.cpp" />
     <ClCompile Include="pawn.cpp" />
+    <ClCompile Include="pawn_parser.cpp" />
     <ClCompile Include="pieces.cpp" />
+    <ClCompile Include="piece_parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bishop.h" />
@@ -140,6 +145,7 @@
     <ClInclude Include="coord.h" />
     <ClInclude Include="king.h" />
     <ClInclude Include="knight.h" />
+    <ClInclude Include="parser.h" />
     <ClInclude Include="pawn.h" />
     <ClInclude Include="piece.h" />
     <ClInclude Include="queen.h" />

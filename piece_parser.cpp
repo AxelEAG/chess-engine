@@ -35,15 +35,17 @@ std::optional<FullMove> Parser::parsePieceMove()
     FullMove move{};
     move.piece = *piece;
 
+    // Disambiguation? (Could be full move or none too)
     auto optFile = parseFile();
     auto optRank = parseRank();
 
-    move.move.takes = consume('x');
+    move.move.takes = consume('x'); // Optional capture
 
     auto to = parseSquare();
-    if (to) // Disambiguation? + Capture? + To
+    if (to)
     {
-        if (optFile) move.fromFile = *optFile;
+        // Disambiguation
+        if (optFile) move.fromFile = *optFile; 
         if (optRank) move.fromRank = *optRank;
         move.move.to = *to;
     }

@@ -26,6 +26,7 @@ public:
     void parseOptionalCheck(Move& move);
     std::optional<FullMove> parseMove();
 
+    std::optional<FullMove> parseCastle();
     std::optional<FullMove> parsePieceMove();
 
     std::optional<Pieces::Type> parsePromotionPiece();

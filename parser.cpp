@@ -60,8 +60,8 @@ void Parser::parseOptionalCheck(Move& move)
 
 std::optional<FullMove> Parser::parseMove()
 {
-    //if (auto move = parseCastle())
-    //    return move;
+    if (auto move = parseCastle())
+        return move;
 
     if (auto move = parsePawnMove())
         return move;
