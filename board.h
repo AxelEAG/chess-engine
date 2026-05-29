@@ -24,8 +24,12 @@ public:
 	void reset();
 	void setup();
 
-	bool isEmpty(Square square) const { return (m_board[getIndex(square)] == nullptr); }
-
+	bool isEmpty(Square sq) const { return (m_board[getIndex(sq)] == nullptr); }
+	bool isValid(Square sq) const
+	{
+		return (sq.file >= File::a && sq.file < File::max_files &&
+				sq.rank >= Rank::r8 && sq.rank < Rank::max_ranks);
+	}
 	Piece* getPiece(Square square) const { return m_board[getIndex(square)].get(); }
 	std::optional<Square> getEnPassant() const { return m_en_passant; }
 	Board() { reset(); setup(); };
