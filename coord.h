@@ -102,18 +102,33 @@ struct Move
 	Pieces::Type promote_to{Pieces::none};
 };
 
-struct ParsedMove {
+struct ParsedMove 
+{
 	Pieces::Type piece{};
 
 	std::optional<File> fromFile{};
 	std::optional<Rank> fromRank{};
 
 	Square to;
+
 	bool takes{ false };
 	Check isCheck{ Check::none };
 	Special special{ Special::none };
 	Pieces::Type promote_to{ Pieces::none };
 };
 
+struct FullMove
+{
+	Pieces::Type piece{};
+
+	Square from;
+
+	Square to;
+
+	bool takes{ false };
+	Check isCheck{ Check::none };
+	Special special{ Special::none };
+	Pieces::Type promote_to{ Pieces::none };
+};
 
 #endif
