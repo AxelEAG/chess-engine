@@ -190,17 +190,6 @@ constexpr bool isType(Piece piece, PieceType type)
     return (typeOf(piece) == type);
 }
 
-constexpr bool isSame(Piece piece, PieceType type, Side side)
-{
-    return (piece == toPiece(type, side));
-}
-
-
-constexpr bool isEnemy(Piece piece, Side side)
-{
-    return (side != sideOf(piece));
-}
-
 constexpr const PieceInfo& getInfo(PieceType type)
 {
     return pieceInfo[static_cast<std::size_t>(type)];

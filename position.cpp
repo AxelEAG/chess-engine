@@ -1,4 +1,4 @@
-#include "board.h"
+#include "position.h"
 
 #include <iostream>
 #include <utility>
@@ -8,13 +8,13 @@ std::size_t getIndex(Square sq)
 	return (Rank::max_ranks * sq.rank + sq.file);
 }
 
-void Board::movePiece(Square from, Square to)
+void Position::movePiece(Square from, Square to)
 {
 	set(get(from)   , to);
 	set(Piece::empty, from);
 }
 
-void Board::move(Square from, const Move& move)
+void Position::move(Square from, const Move& move)
 {
 	switch (move.special)
 	{
@@ -37,19 +37,19 @@ void Board::move(Square from, const Move& move)
 
 }
 
-void Board::reset()
+void Position::reset()
 {
 	for (auto& square : m_board)
 		square = Piece::empty;
 }
 
-void Board::setPair(Piece piece, File file, Rank rank)
+void Position::setPair(Piece piece, File file, Rank rank)
 {
 	set(piece, { file, rank });
 	set(piece, { File::h - file, rank });
 }
 
-void Board::setup()
+void Position::setup()
 {
 	for (Side side : { Side::white, Side::black })
 	{
@@ -67,9 +67,13 @@ void Board::setup()
 		for (int file{ File::a }; file < File::max_files; ++file)
 			set(pawn, { file, pawnRank });
 	}
+
+	m_en_passant = std::nullopt;
+	sideToMove = Side::white;
+	// TODO: Reset castling rights
 }
 
-void Board::print()
+void Position::printBoard()
 {
 	int rowNumber{ Rank::max_ranks };
 
