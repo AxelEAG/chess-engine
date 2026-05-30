@@ -82,3 +82,166 @@ std::optional<ParsedMove> parseMove(std::string_view text)
 
     return move;
 }
+
+std::optional<ParsedMove> Parser::parseCastle()
+{
+    if (!consume('O'))
+        return std::nullopt;
+    if (!consume('-'))
+        return std::nullopt;
+    if (!consume('O'))
+        return std::nullopt;
+
+    ParsedMove move{};
+    move.piece = PieceType::king;
+    move.fromFile = File::e;
+
+    // Queenside castle
+    if (consume('-'))
+    {
+        if (!consume('O'))
+            return std::nullopt;
+
+        move.special = Special::queenside_castle;
+    }
+    // Kingside castle
+    else
+        move.special = Special::kingside_castle;
+
+    parseCheck(move);
+
+    return move;
+}
+
+std::optional<PieceType> Parser::parsePiece()
+{
+    switch (peek())
+    {
+    case 'K':
+        ++m_pos;
+        return PieceType::king;
+    case 'Q':
+        ++m_pos;
+        return PieceType::queen;
+    case 'R':
+        ++m_pos;
+        return PieceType::rook;
+    case 'B':
+        ++m_pos;
+        return PieceType::bishop;
+    case 'N':
+        ++m_pos;
+        return PieceType::knight;
+    default:
+        return std::nullopt;
+    }
+}
+
+std::optional<ParsedMove> Parser::parsePieceMove()
+{
+    auto piece = parsePiece();
+    if (!piece)
+        return std::nullopt;
+
+    ParsedMove move{};
+    move.piece = *piece;
+
+    // Disambiguation? (Could be full move or none too)
+    auto optFile = parseFile();
+    auto optRank = parseRank();
+
+    move.takes = consume('x'); // Optional capture
+
+    auto to = parseSquare();
+    if (to)
+    {
+        // Disambiguation
+        if (optFile) move.fromFile = *optFile;
+        if (optRank) move.fromRank = *optRank;
+        move.to = *to;
+    }
+    else if (optFile && optRank && !move.takes) // Full move
+        move.to = Square{ *optFile, *optRank };
+    else
+        return std::nullopt;
+
+    parseCheck(move);
+
+    return move;
+}
+
+std::optional<PieceType> Parser::parsePromotionPiece()
+{
+    switch (peek())
+    {
+    case 'Q':
+        ++m_pos;
+        return PieceType::queen;
+
+    case 'R':
+        ++m_pos;
+        return PieceType::rook;
+
+    case 'B':
+        ++m_pos;
+        return PieceType::bishop;
+
+    case 'N':
+        ++m_pos;
+        return PieceType::knight;
+
+    default:
+        return std::nullopt;
+    }
+}
+
+// true if valid notation (no promotion OR successful promotion), false if invalid
+bool Parser::parsePromotion(ParsedMove& move)
+{
+    if (!consume('='))
+        return true;
+
+    auto promote_to = parsePromotionPiece();
+    if (!promote_to)
+        return false;
+
+    move.special = Special::promotion;
+    move.promote_to = *promote_to;
+    return true;
+}
+
+std::optional<ParsedMove> Parser::parsePawnMove()
+{
+    auto file = parseFile();
+    if (!file)
+        return std::nullopt;
+
+    ParsedMove move{};
+    move.piece = PieceType::pawn;
+
+    // Check capture
+    if (consume('x'))
+    {
+        auto to = parseSquare();
+
+        if (!to)
+            return std::nullopt;
+
+        move.fromFile = *file;
+        move.to = *to;
+        move.takes = true;
+    }
+    // Check simple move
+    else if (auto rank = parseRank())
+        move.to = Square{ *file, *rank };
+    else
+        return std::nullopt;
+
+    if (!parsePromotion(move))
+        return std::nullopt;
+
+    parseCheck(move);
+
+    return move;
+
+}
