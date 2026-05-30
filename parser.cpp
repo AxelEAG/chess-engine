@@ -1,8 +1,4 @@
-#include <string_view>
-#include <optional>
-#include "coord.h"
 #include "parser.h"
-
 
 bool Parser::consume(char expected)
 {
@@ -48,7 +44,7 @@ std::optional<Square> Parser::parseSquare()
     return Square{ *file, *rank };
 }
 
-void Parser::parseOptionalCheck(ParsedMove& move)
+void Parser::parseCheck(ParsedMove& move)
 {
     if (consume('+'))
         move.isCheck = Check::check;

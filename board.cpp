@@ -1,27 +1,17 @@
-#include <iostream>
-#include <array>
-#include <utility>
-#include <cctype>
-
-#include "coord.h"
 #include "board.h"
-#include "pawn.h"
-#include "rook.h"
-#include "bishop.h"
-#include "queen.h"
-#include "king.h"
-#include "knight.h"
 
-std::size_t getIndex(Square square)
+#include <iostream>
+#include <utility>
+
+std::size_t getIndex(Square sq)
 {
-	return (Rank::max_ranks * square.rank + square.file);
+	return (Rank::max_ranks * sq.rank + sq.file);
 }
 
 void Board::movePiece(Square from, Square to)
 {
-	m_board[getIndex(to)] = std::move(m_board[getIndex(from)]);
-	auto piece{ getPiece(to) };
-	if (!piece->hasMoved()) piece->setMoved();
+	set(get(from)   , to);
+	set(Piece::empty, from);
 }
 
 void Board::move(Square from, const Move& move)
@@ -29,7 +19,7 @@ void Board::move(Square from, const Move& move)
 	switch (move.special)
 	{
 	case Special::en_passant:
-		m_board[getIndex({ move.to.file, from.rank })].reset(); // Enemy's at same height as pawn but to its left / right
+		set(Piece::empty, { move.to.file, from.rank }); // Enemy's at same height as pawn but to its left / right
 		break;
 	case Special::double_step:
 		m_en_passant = move.to;
@@ -44,14 +34,19 @@ void Board::move(Square from, const Move& move)
 
 	movePiece(from, move.to);
 	m_en_passant.reset(); // en passant only lasts one turn
-	// TODO: take the piece (although by default as it's unique ptrs, they already behave as if they did)
 
 }
 
 void Board::reset()
 {
 	for (auto& square : m_board)
-		square.reset();
+		square = Piece::empty;
+}
+
+void Board::setPair(Piece piece, File file, Rank rank)
+{
+	set(piece, { file, rank });
+	set(piece, { File::h - file, rank });
 }
 
 void Board::setup()
@@ -61,15 +56,16 @@ void Board::setup()
 		Rank majorRank { side == Side::white ? Rank::r1 : Rank::r8 };
 		Rank pawnRank  { side == Side::white ? Rank::r2 : Rank::r7 };
 
-		placePair<Rook>  (File::a, majorRank, side);
-		placePair<Knight>(File::b, majorRank, side);
-		placePair<Bishop>(File::c, majorRank, side);
+		setPair(toPiece(PieceType::rook  , side), File::a, majorRank);
+		setPair(toPiece(PieceType::knight, side), File::b, majorRank);
+		setPair(toPiece(PieceType::bishop, side), File::c, majorRank);
 
-		set<Queen>({ File::d, majorRank }, side);
-		set<King> ({ File::e, majorRank }, side);
+		set(toPiece(PieceType::queen, side), { File::d, majorRank });
+		set(toPiece(PieceType::king , side), { File::e, majorRank });
 
+		auto pawn{ toPiece(PieceType::pawn, side) };
 		for (int file{ File::a }; file < File::max_files; ++file)
-			set<Pawn>({ file, pawnRank }, side);
+			set(pawn, { file, pawnRank });
 	}
 }
 
@@ -81,9 +77,8 @@ void Board::print()
 	{
 		for (std::size_t file{ File::a }; file < File::max_files; ++file)
 		{
-			auto& piece = m_board[Rank::max_ranks * rank + file];
-			char symbol{ piece ? piece->getSymbol() : '-' };
-			if (piece && piece->getSide() == Side::black) symbol = std::tolower(symbol);
+			auto piece = m_board[Rank::max_ranks * rank + file];
+			char symbol = getInfo(piece).symbol;
 			std::cout << symbol << ' ';
 		}
 		std::cout << '|' << rowNumber-- << '\n';

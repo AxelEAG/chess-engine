@@ -21,18 +21,6 @@
     <ClCompile Include="board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pawn.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="king.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="knight.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pieces.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -50,34 +38,19 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="coord.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="piece.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pawn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bishop.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="queen.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="king.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="knight.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="square.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="move.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

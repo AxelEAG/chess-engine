@@ -1,18 +1,12 @@
-#include "coord.h"
 #include "board.h"
-#include "piece.h"
-#include "pawn.h"
-#include "bishop.h"
-#include "queen.h"
-#include "king.h"
-#include "rook.h"
 #include "parser.h"
 
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <algorithm>
-#include <optional>
+
+#include <vector>
 
 // Goal: Create a terminal version of chess
 // Display board
@@ -51,7 +45,7 @@ std::string stringifyMove(char symbol, Square from, const Move& move)
 	if (move.special == Special::promotion)
 	{
 		sMove += '=';
-		sMove += Pieces::symbol[move.promote_to];
+		sMove += getInfo(move.promote_to).symbol;
 	}
 
 	if (move.isCheck == Check::check)
@@ -61,34 +55,57 @@ std::string stringifyMove(char symbol, Square from, const Move& move)
 	return sMove;
 }
 
-void printMoves(Board& board, Square from)
-{
-	auto piece{ board.getPiece(from) };
-	if (piece)
-	{
-		std::cout << piece->getSymbol() << files[from.file] << ranks[from.rank];
-		auto moves{ piece->getValidMoves(board, from) };
-		char separator{ ':' };
-		for (const auto& move : moves)
-		{
-			std::cout << separator << ' ' << stringifyMove(piece->getSymbol(), from, move);
-			separator = ',';
-		}
-	}
-	else
-		std::cout << "No piece";
-	std::cout << '\n';
-}
+//void printMoves(Board& board, Square from)
+//{
+//	auto piece{ board.getPiece(from) };
+//	if (piece)
+//	{
+//		std::cout << getInfo(piece).symbol << files[from.file] << ranks[from.rank];
+//		auto moves{ piece->getValidMoves(board, from) };
+//		char separator{ ':' };
+//		for (const auto& move : moves)
+//		{
+//			std::cout << separator << ' ' << stringifyMove(piece->getSymbol(), from, move);
+//			separator = ',';
+//		}
+//	}
+//	else
+//		std::cout << "No piece";
+//	std::cout << '\n';
+//}
 
 void tester();
 std::optional<ParsedMove> parseMove(std::string_view text);
 
-bool isSame(const Piece& piece, Side side, Pieces::Type type)
+std::optional<Square> disambiguateCandidates(const ParsedMove& move, std::span<const Square> candidates)
 {
-	return (piece.getSide() == side && piece.getType() == type);
+	bool isDisambiguated{ move.fromFile || move.fromRank };
+
+	if (candidates.size() == 0)
+		return std::nullopt;
+
+	if (candidates.size() == 1)
+	{
+		if (isDisambiguated)
+			return std::nullopt;
+		return candidates[0];
+	}
+
+	if (!isDisambiguated)
+		return std::nullopt;
+
+	std::optional<Square> match = std::nullopt;
+	for (auto candidate : candidates)
+	{
+		if (move.fromFile && move.fromFile != candidate.file) continue;
+		if (move.fromRank && move.fromRank != candidate.rank) continue;
+		if (match) return std::nullopt;
+		match = candidate;
+	}
+	return match;
 }
 
-std::vector<Square> generateSlideCandidates(const Board& board, ParsedMove& move, Side side)
+std::optional<Square> generateSlideMove(const Board& board, const ParsedMove& move, Side side)
 {
 	std::vector<Square> candidates = {};
 	auto slide = [&](Dir dir)
@@ -97,9 +114,10 @@ std::vector<Square> generateSlideCandidates(const Board& board, ParsedMove& move
 
 			while (board.isValid(next))
 			{
-				if (auto piece = board.getPiece(next))
+				auto piece = board.get(next);
+				if (!isEmpty(piece))
 				{
-					if (isSame(*piece, side, move.piece))
+					if (isSame(piece, move.piece, side))
 						candidates.push_back(next);
 					break;
 				}
@@ -108,59 +126,84 @@ std::vector<Square> generateSlideCandidates(const Board& board, ParsedMove& move
 			}
 		};
 
-	for (Dir dir : Pieces::getDirs(move.piece))
+	for (Dir dir : getInfo(move.piece).dirs)
 		slide(dir);
-	return candidates;
+
+	return disambiguateCandidates(move, candidates);
+
 }
 
-std::vector<Square> generateJumpCandidates(const Board& board, ParsedMove& move, Side side)
+std::optional<Square> generateJumpMove(const Board& board, const ParsedMove& move, Side side)
 {
 	std::vector<Square> candidates = {};
-	auto jump = [&](Dir dir)
-		{
-			Square next{ move.to + dir };
 
-			if (!board.isValid(next))
-				return;
+	for (Dir dir : getInfo(move.piece).dirs)
+	{
+		Square next{ move.to + dir };
 
-			auto piece = board.getPiece(next);
-			if (piece && (isSame(*piece, side, move.piece)))
-				candidates.push_back(next);
-		};
+		if (!board.isValid(next))
+			continue;
 
-	for (Dir dir : Pieces::getDirs(move.piece))
-		jump(dir);
+		auto piece = board.get(next);
+		if (isSame(piece, move.piece, side))
+			candidates.push_back(next);
+	}
+
+	return disambiguateCandidates(move, candidates);
+}
+
+std::optional<Square> generatePieceMove(const Board& board, const ParsedMove& move, Side side)
+{
+	// Validate capture
+	if (move.takes)
+	{
+		if (auto capture{ board.get(move.to) };  isEmpty(capture) || !isEnemy(capture, side))
+			return std::nullopt;
+	}
+	else if (auto piece{ board.get(move.to) }; !isEmpty(piece))
+		return std::nullopt;
+
+	if (getInfo(move.piece).canSlide)
+		return generateSlideMove(board, move, side);
+	
+	return generateJumpMove(board, move, side);
 }
 
 std::optional<Square> generatePawnMove(const Board& board, ParsedMove& move, Side side)
 {
-	int  forward  { (side == Side::white ? -1 : 1) };
-	Dir  revDir{ 0, -1*forward };
+	int  forward{ (side == Side::white ? -1 : 1) };
+	Dir  revDir{ 0, -1 * forward };
 	Rank startRank{ (side == Side::white ? Rank::r2 : Rank::r7) };
-	Rank lastRank { (side == Side::white ? Rank::r8 : Rank::r1) };
-	
+	Rank lastRank{ (side == Side::white ? Rank::r8 : Rank::r1) };
+
 	// Invalid promotion
 	if ((move.special == Special::promotion) && (move.to.rank != lastRank))
 		return std::nullopt;
 
 	if (move.takes)
 	{
-
 		Square from{ *move.fromFile, move.to.rank - forward };
-		auto piece = board.getPiece(from);
-		if (!piece || !isSame(*piece, side, Pieces::pawn))
+		if (auto pawn = board.get(from); !isSame(pawn, PieceType::pawn, side))
 			return std::nullopt;
 
-		// Simple capture
-		if (auto capturedPiece = board.getPiece(move.to))
-			return from;
-		
+		if (auto capture{ board.get(move.to) }; !isEmpty(capture))
+		{
+			if (isEnemy(capture, side))
+				return from;
+
+			return std::nullopt;
+		}
+
 		auto en_passant{ board.getEnPassant() };
 		if (!en_passant)
 			return std::nullopt;
 
-		Square enemy{ move.to.file, from.rank };
-		if (enemy.file == en_passant->file && enemy.rank == en_passant->rank)
+		Square enemySq{ move.to.file, from.rank };
+		auto enemy{ board.get(enemySq)};
+		if (isEmpty(enemy) || !isEnemy(enemy, side))
+			return std::nullopt;
+
+		if (enemySq == *en_passant)
 		{
 			move.special = Special::en_passant;
 			return from;
@@ -173,20 +216,20 @@ std::optional<Square> generatePawnMove(const Board& board, ParsedMove& move, Sid
 		return std::nullopt;
 
 	Square push{ move.to + revDir };
-	if (auto piece = board.getPiece(push))
+	if (auto piece = board.get(push); !isEmpty(piece))
 	{
-		if (isSame(*piece, side, Pieces::pawn))
+		if (isSame(piece, PieceType::pawn, side))
 			return push;
 		return std::nullopt;
 	}
 
-	Square dPush{ push + revDir };
-	if (auto piece = board.getPiece(dPush))
+	Square dbPush{ push + revDir };
+	if (auto piece = board.get(dbPush); !isEmpty(piece))
 	{
-		if (isSame(*piece, side, move.piece) && dPush.rank == startRank)
-		{	
+		if (isSame(piece, move.piece, side) && dbPush.rank == startRank)
+		{
 			move.special = Special::double_step;
-			return dPush;
+			return dbPush;
 		}
 		return std::nullopt;
 	}
@@ -194,138 +237,44 @@ std::optional<Square> generatePawnMove(const Board& board, ParsedMove& move, Sid
 	return std::nullopt;
 }
 
-std::optional<Square> getPawnSquare(const Board& board, ParsedMove& move, Side side)
+
+bool isCastle(Special special)
 {
-
-	std::vector<Square> options = {};
-	auto jump = [&](Dir dir)
-		{
-			int file{ move.to.file + dir.x };
-			int rank{ move.to.rank + dir.y };
-			if (file < File::a || file >= File::max_files)  return;
-			if (rank < Rank::r8 || rank >= Rank::max_ranks) return;
-
-			Square curr{ file, rank };
-			if (!board.isEmpty(curr))
-			{
-				auto piece = board.getPiece(curr);
-				if (piece->getSide() == side && piece->getType() == move.piece)
-					options.push_back(curr);
-			}
-		};
-
-	for (Dir dir : Pieces::getDirs(move.piece))
-		jump(dir);
-
-	if (options.size() == 0)
-		return std::nullopt;
-
-	std::optional<Square> from{ std::nullopt };
-	for (auto opt : options)
-	{
-		if (move.fromFile && move.fromFile != opt.file) continue;
-		if (move.fromRank && move.fromRank != opt.rank) continue;
-		from = Square{ opt.file, opt.rank };
-		break;
-	}
-
-	return from;
+	return (special == Special::kingside_castle || special == Special::queenside_castle);
 }
 
-
-std::vector<Square> generateCandidates(const Board& board, ParsedMove& move, Side side)
+std::optional<Move> validateMove(const Board& board, ParsedMove& move, Side side)
 {
-	// generateJumpCandidates()
-	// generateSlideCandidates()
-	// generatePawnCandidates()
-
-}
-
-// If 2+ candidates, ensure move provides disambiguation, else error
-
-
-std::optional<ParsedMove> validatePieceMove(const Board& board, ParsedMove& move, Side side)
-{
-	auto candidates = generateCandidates(board, move, side);
-
-	auto from = resolveDisambiguation(move, candidates);
-
-	if (!from)
-		return std::nullopt;
-
-	move.from = *from;
-	return move;
-
-	// Validate capture
-	if (move.takes && (!board.getPiece(move.to) 
-	                   || board.getPiece(move.to)->getSide() == side))
-		return std::nullopt;
-
 	std::optional<Square> from = std::nullopt;
-	if (Pieces::canSlide(move.piece))
-		from = getSlidingPieceSquare(board, move, side);
-	else if (move.piece == Pieces::king)
-		from = getKingSquare(board, move, side);
-	else if (move.piece == Pieces::knight)
-		from = getKnightSquare(board, move, side);
-	else
-		from = getPawnSquare(board, move, side);
+
+	if (isCastle(move.special))
+		from = std::nullopt; // TODO
+	else if (move.piece == PieceType::pawn)
+		from = generatePawnMove(board, move, side);
+	else 
+		from = generatePieceMove(board, move, side);
 
 
 	if (!from)
 		return std::nullopt;
-	move.from = *from;
 
+	std::optional<Check> isCheck{ move.isCheck };
+	// TODO: Validate check / mate
+
+	if (!isCheck)
+		return std::nullopt;
+
+	return Move
+	{
+		.piece = toPiece(move.piece, side),
+		.from = *from,
+		.to = move.to,
+		.takes = move.takes,
+		.isCheck = *isCheck,
+		.special = move.special,
+		.promote_to = toPiece(move.promote_to, side)
+	};
 }
-
-
-std::optional<ParsedMove> validateMove(const Board& board, ParsedMove& move, Side side)
-{
-	// Validate:
-	// Can the right piece move there?
-	if (move.special == Special::kingside_castle
-		&& move.special == Special::queenside_castle)
-		; //return validateCastle();
-	else if (move.piece == Pieces::pawn) // address differently
-		; //  return validatePawnMove();
-	else
-		return validatePieceMove(board, move, side);
-}
-		////if (Pieces::canSlide(move.piece))
-		////{
-		////	std::vector<Square> options = {};
-		////	for (Dir dir : Pieces::getDirs(move.piece))
-		////		walk(board, move.to, options, dir, side, move.piece);
-		////	if (options.size() == 0)
-		////		return std::nullopt;
-
-		////	bool foundMove{ false };
-		////	for (auto opt : options)
-		////	{
-		////		if (move.fromFile && move.fromFile != opt.file) continue;
-		////		if (move.fromRank && move.fromRank != opt.rank) continue;
-		////		move.from = Square{ options[0].file, opt.rank };
-		////		foundMove = true;
-		////		break;
-		////	}
-		////	if (!foundMove)
-		////		return std::nullopt;
-		////}
-		////	{
-		////	for (Dir dir : Pieces::getDirs(move.piece))
-		////	{
-		////	}
-		////}
-		////
-	}
-	
-
-	// TODO: castling exception, no 'to'
-
-	// TODO:
-	// Is there ambiguity and is it addressed?
-	// Is there a check and is it represented?
-	// Is there a promotion and is it represented?
 
 int main()
 {

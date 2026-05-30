@@ -1,5 +1,3 @@
-#include <optional>
-#include "coord.h"
 #include "parser.h"
 
 std::optional<ParsedMove> Parser::parseCastle()
@@ -12,7 +10,7 @@ std::optional<ParsedMove> Parser::parseCastle()
         return std::nullopt;
 
     ParsedMove move{};
-    move.piece = Pieces::king;
+    move.piece = PieceType::king;
     move.fromFile = File::e;
 
     // Queenside castle
@@ -27,7 +25,7 @@ std::optional<ParsedMove> Parser::parseCastle()
     else
         move.special = Special::kingside_castle;
 
-    parseOptionalCheck(move);
+    parseCheck(move);
 
     return move;
 }

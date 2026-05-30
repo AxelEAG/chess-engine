@@ -1,34 +1,38 @@
-#include <optional>
-#include "coord.h"
+
+#include "move.h"
+#include "piece.h"
+#include "square.h"
 #include "parser.h"
 
-std::optional<Pieces::Type> Parser::parsePromotionPiece()
+#include <optional>
+
+std::optional<PieceType> Parser::parsePromotionPiece()
 {
     switch (peek())
     {
     case 'Q':
         ++m_pos;
-        return Pieces::queen;
+        return PieceType::queen;
 
     case 'R':
         ++m_pos;
-        return Pieces::rook;
+        return PieceType::rook;
 
     case 'B':
         ++m_pos;
-        return Pieces::bishop;
+        return PieceType::bishop;
 
     case 'N':
         ++m_pos;
-        return Pieces::knight;
+        return PieceType::knight;
 
     default:
         return std::nullopt;
     }
 }
 
-// true if no promotion OR successful promotion
-bool Parser::parseOptionalPromotion(ParsedMove& move)
+// true if valid notation (no promotion OR successful promotion), false if invalid
+bool Parser::parsePromotion(ParsedMove& move)
 {
     if (!consume('='))
         return true;
@@ -49,7 +53,7 @@ std::optional<ParsedMove> Parser::parsePawnMove()
         return std::nullopt;
 
     ParsedMove move{};
-    move.piece = Pieces::pawn;
+    move.piece = PieceType::pawn;
 
     // Check capture
     if (consume('x'))
@@ -69,10 +73,10 @@ std::optional<ParsedMove> Parser::parsePawnMove()
     else
         return std::nullopt;
     
-    if (!parseOptionalPromotion(move))
+    if (!parsePromotion(move))
         return std::nullopt;
 
-    parseOptionalCheck(move);
+    parseCheck(move);
 
     return move;
 

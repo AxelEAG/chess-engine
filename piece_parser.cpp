@@ -1,26 +1,24 @@
-#include <optional>
-#include "coord.h"
 #include "parser.h"
 
-std::optional<Pieces::Type> Parser::parsePiece()
+std::optional<PieceType> Parser::parsePiece()
 {
     switch (peek())
     {
     case 'K':
         ++m_pos;
-        return Pieces::king;
+        return PieceType::king;
     case 'Q':
         ++m_pos;
-        return Pieces::queen;
+        return PieceType::queen;
     case 'R':
         ++m_pos;
-        return Pieces::rook;
+        return PieceType::rook;
     case 'B':
         ++m_pos;
-        return Pieces::bishop;
+        return PieceType::bishop;
     case 'N':
         ++m_pos;
-        return Pieces::knight;
+        return PieceType::knight;
     default:
         return std::nullopt;
     }
@@ -54,7 +52,7 @@ std::optional<ParsedMove> Parser::parsePieceMove()
     else
         return std::nullopt;
 
-    parseOptionalCheck(move);
+    parseCheck(move);
 
     return move;
 
