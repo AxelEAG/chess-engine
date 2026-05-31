@@ -5,6 +5,7 @@
 
 class Validator
 {
+public:
 	Validator(Position& position) : m_pos{ position }
 	{
 	}
@@ -14,9 +15,9 @@ private:
 	Position& m_pos;
 	Piece toPiece(PieceType type) const { return ::toPiece(type, m_pos.getSide()); }
 	bool isPiece(Piece piece, PieceType type) { return (piece == toPiece(type));}
-	bool isEnemy(Piece piece) const { return (m_pos.getSide() != sideOf(piece));}
-	bool isValid(Square sq) const   { return m_pos.isValid(sq); }
-	bool isWhite() const { return m_pos.getSide() == Side::white; }
+	Side getSide() const { return m_pos.getSide(); }
+	bool isEnemy(Piece piece) const { return (getSide() != sideOf(piece));}
+	bool isWhite() const { return m_pos.isWhite(); }
 
 	Piece getPiece(Square sq) const { return m_pos.get(sq); }
 
@@ -24,6 +25,7 @@ private:
 	std::optional<Square> generateJumpMove(const ParsedMove& move);
 	std::optional<Square> generatePieceMove(const ParsedMove& move);
 	std::optional<Square> generatePawnMove(ParsedMove& move);
+	std::optional<Square> generateCastleMove(ParsedMove& move);
 };
 
 #endif

@@ -1,6 +1,9 @@
 #include "validator.h"
 #include <span>
 #include <vector>
+#include <iostream>
+
+bool isValid(Square sq);
 
 std::optional<Square> disambiguateCandidates(const ParsedMove& move, std::span<const Square> candidates)
 {
@@ -96,7 +99,7 @@ std::optional<Square> Validator::generatePieceMove(const ParsedMove& move)
 
 std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
 {
-	int  forward	{ isWhite() ? -1 : 1 };
+	int  forward	{ isWhite() ?  -1 : 1 };
 	Dir  revDir		{ 0, -1 * forward };
 	Rank startRank	{ isWhite() ? Rank::r2 : Rank::r7};
 	Rank lastRank	{ isWhite() ? Rank::r8 : Rank::r1};
@@ -163,6 +166,38 @@ std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
 }
 
 
+std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
+{
+	const Rank majorRank{ getMajorRank(getSide()) };
+
+	// TODO: special and castleside maybe should be same thing
+	const bool isKingside = move.special == Special::kingside_castle;
+	const CastleSide castleSide = isKingside ? CastleSide::kingside : CastleSide::queenside;
+	const Dir dir{ isKingside ? 1 : -1, 0 };
+	const File rookFile = isKingside ? File::h : File::a;
+	const File kingFile = isKingside ? File::g : File::c;
+
+	Square from{ File::e, majorRank };
+	if (auto king{ getPiece(from) }; isEmpty(king) || !isType(king, PieceType::king))
+		return std::nullopt;
+
+	if (!m_pos.getCastleRights(getSide(), castleSide))
+		return std::nullopt;
+
+	// TODO: Check if king can castle without passing through check
+	
+	// Check if pieces in the way
+	for (Square next(from + dir); next.file != rookFile; next += dir)
+	{
+		if (auto piece{ getPiece(next) }; !isEmpty(piece))
+			return std::nullopt;
+	}
+
+	move.to = Square{ kingFile, majorRank };
+	
+	return from;
+}
+
 static bool isCastle(Special special)
 {
 	return (special == Special::kingside_castle || special == Special::queenside_castle);
@@ -173,7 +208,7 @@ std::optional<Move> Validator::validate(ParsedMove& move)
 	std::optional<Square> from = std::nullopt;
 
 	if (isCastle(move.special))
-		from = std::nullopt; // TODO
+		from = generateCastleMove(move);
 	else if (move.piece == PieceType::pawn)
 		from = generatePawnMove(move);
 	else

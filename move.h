@@ -14,6 +14,12 @@ enum class Special
 	kingside_castle,
 };
 
+enum class CastleSide
+{
+	kingside,
+	queenside
+};
+
 enum class Check
 {
 	none,

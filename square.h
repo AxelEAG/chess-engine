@@ -63,7 +63,7 @@ struct Square
 };
 
 
-constexpr std::array ranks{ '8', '7', '6', '5', '4', '3', '2', '1' };
-constexpr std::array files{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+inline constexpr std::array ranks{ '8', '7', '6', '5', '4', '3', '2', '1' };
+inline constexpr std::array files{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
 #endif

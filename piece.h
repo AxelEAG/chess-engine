@@ -46,21 +46,28 @@ enum class Side
     black
 };
 
-constexpr std::array rook_dirs{
+struct PieceInfo
+{
+    std::span<const Dir> dirs;
+    bool canSlide;
+    char symbol;
+};
+
+inline constexpr std::array rook_dirs{
 	Dir{-1,  0},
 	Dir{ 0, -1},
 	Dir{ 1,  0},
 	Dir{ 0,  1}
 };
 
-constexpr std::array bishop_dirs{
+inline constexpr std::array bishop_dirs{
 	Dir{-1,  1},
 	Dir{-1, -1},
 	Dir{ 1, -1},
 	Dir{ 1,  1}
 };
 
-constexpr std::array queen_dirs{
+inline constexpr std::array queen_dirs{
 	Dir{-1,  1},
 	Dir{-1,  0},
 	Dir{-1, -1},
@@ -71,7 +78,7 @@ constexpr std::array queen_dirs{
 	Dir{ 0,  1}
 };
 
-constexpr std::array knight_dirs {
+inline constexpr std::array knight_dirs {
     Dir{-2,  1},
     Dir{-2, -1},
     Dir{-1, -2},
@@ -82,16 +89,9 @@ constexpr std::array knight_dirs {
     Dir{-1,  2}
 };
 
-constexpr std::array<Dir, 0> empty_dirs{};
+inline constexpr std::array<Dir, 0> empty_dirs{};
 
-struct PieceInfo
-{
-    std::span<const Dir> dirs;
-    bool canSlide;
-    char symbol;
-};
-
-constexpr PieceInfo pieceInfo[] =
+inline constexpr PieceInfo pieceInfo[] =
 {
     { empty_dirs,  false, '-' },
     { empty_dirs,  false, 'P' },
@@ -198,6 +198,32 @@ constexpr const PieceInfo& getInfo(PieceType type)
 constexpr const PieceInfo& getInfo(Piece piece)
 {
     return pieceInfo[static_cast<std::size_t>(piece)];
+}
+
+constexpr Rank getMajorRank(Side side)
+{
+    return (side == Side::white ? Rank::r1 : Rank::r8);
+}
+
+constexpr Rank getPawnRank(Side side)
+{
+    return (side == Side::white ? Rank::r2 : Rank::r7);
+}
+
+constexpr Square QueensRookSq(Side side)
+{
+    if (side == Side::white)
+        return Square{ File::a, r1 };
+    else
+        return Square{ File::a, r8 };
+}
+
+constexpr Square KingsRookSq(Side side)
+{
+    if (side == Side::white)
+        return Square{ File::h, r1 };
+    else
+        return Square{ File::h, r8 };
 }
 
 #endif

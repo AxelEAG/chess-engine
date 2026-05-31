@@ -1,5 +1,6 @@
 #include "position.h"
 #include "parser.h"
+#include "validator.h"
 
 #include <iostream>
 #include <string>
@@ -14,11 +15,10 @@
 // Validate move - follows format, and is a move that can be played
 
 // Reqs:
-// Board class
-// Piece class - actual specific piece classes inherit from it? (not for MVP)
-// Specific Piece class
-// Player class?
+// Position class
 // Parser class
+// Validator class
+// Player class?
 
 std::string stringifyMove(char symbol, Square from, const Move& move)
 {
@@ -55,55 +55,43 @@ std::string stringifyMove(char symbol, Square from, const Move& move)
 	return sMove;
 }
 
-//void printMoves(Board& board, Square from)
-//{
-//	auto piece{ board.getPiece(from) };
-//	if (piece)
-//	{
-//		std::cout << getInfo(piece).symbol << files[from.file] << ranks[from.rank];
-//		auto moves{ piece->getValidMoves(board, from) };
-//		char separator{ ':' };
-//		for (const auto& move : moves)
-//		{
-//			std::cout << separator << ' ' << stringifyMove(piece->getSymbol(), from, move);
-//			separator = ',';
-//		}
-//	}
-//	else
-//		std::cout << "No piece";
-//	std::cout << '\n';
-//}
 
 void tester();
 std::optional<ParsedMove> parseMove(std::string_view text);
 
 int main()
 {
-	//Board board{};
-	//Side side = Side::white;
-	//auto toggleSide = [&side]() { (side == Side::white) ? Side::black : Side::white; };
+	std::cout << "Let's play some chess! \n \n";
 
-	//std::cout << "Let's play some chess! \n \n";
-	//while (true)
-	//{
-	//	board.print();
-	//	//while (true)
-	//	//{
-	//	//	std::cout << "Enter your move: ";
-	//	//	std::string input{};
-	//	//	std::cin >> input;
-	//	//	auto move = parseMove(input);
-	//	//	if (!move)
-	//	//		continue;
+	Position position{};
+	position.printBoard();
+	while (true)
+	{
+		std::cout << "Enter your move: ";
+		std::string input{};
+		std::cin >> input;
+		// TODO: ensure valid input - also check max chars? less than 8 maybe
+		auto parsedMove = parseMove(input);
+		if (!parsedMove)
+		{
+			std::cout << "Failed in parsing \n";
+			continue;
+		}
+		Validator v { position };
+		auto move{ v.validate(*parsedMove) };
 
-	//	//	board.move(*move);
+		if (!move)
+		{
+			std::cout << "Failed in validating \n";
+			continue;
+		}
 
-	//	//}
+		std::cout << '\n';
+		position.move(*move);
+		position.printBoard();
 
-	//	toggleSide();
-	//}
-	//board.set<Pawn>({ File::c, Rank::r7 }, Side::white);
-	//printMoves(board, { File::c, Rank::r7 });
+		
+	}
 	
 	tester();
 }

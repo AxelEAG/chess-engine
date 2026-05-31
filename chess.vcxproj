@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="board.cpp" />
+    <ClCompile Include="position.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="parser_test.cpp" />

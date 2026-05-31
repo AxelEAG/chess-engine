@@ -28,7 +28,7 @@ std::optional<Rank> Parser::parseRank()
         return std::nullopt;
 
     ++m_pos;
-    return static_cast<Rank>(c - '1');
+    return static_cast<Rank>(7 - (c - '1'));
 }
 
 std::optional<Square> Parser::parseSquare()

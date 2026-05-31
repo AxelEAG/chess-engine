@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="board.cpp">
+    <ClCompile Include="position.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="parser.cpp">
@@ -27,12 +27,15 @@
     <ClCompile Include="parser_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="validator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="validator.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="piece.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="parser.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="move.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="position.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
