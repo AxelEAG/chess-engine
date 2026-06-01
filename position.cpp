@@ -8,15 +8,57 @@ std::size_t getIndex(Square sq)
 	return (Rank::max_ranks * sq.rank + sq.file);
 }
 
+
 bool isValid(Square sq)
 {
 	return (sq.file >= File::a && sq.file < File::max_files &&
 			sq.rank >= Rank::r8 && sq.rank < Rank::max_ranks);
 }
 
+std::optional<Square> Position::raycast(Square from, Dir dir) const
+{
+	Square next{ from + dir };
+
+	while (isValid(next))
+	{
+		if (!isEmpty(next))
+			return next;
+
+		next += dir;
+	}
+	return std::nullopt;
+}
+
+std::optional<Square> Position::jump(Square from, Dir dir) const
+{
+	Square next{ from + dir };
+
+	if (!isValid(next) || isEmpty(next))
+		return std::nullopt;
+
+	return next;
+}
+
+Square Position::getKingSq(Side side) const
+{
+	return (side == Side::white) ? whiteKingSq : blackKingSq;
+}
+
+void Position::setKingSq(Side side, Square sq)
+{
+	if (side == Side::white)
+		whiteKingSq = sq;
+	else
+		blackKingSq = sq;
+}
+
 void Position::movePiece(Square from, Square to)
 {
-	set(get(from)   , to);
+	auto piece{ get(from) };
+	if (isType(piece, PieceType::king))
+		setKingSq(getSide(), to);
+
+	set(piece		, to);
 	set(Piece::empty, from);
 }
 
@@ -180,4 +222,48 @@ void Position::setCastleRights(Side side, bool enabled)
 		castlingRights |= castleMask(side);
 	else
 		castlingRights &= ~castleMask(side);
+}
+
+
+// Checks if diff pieces can attack the square
+bool Position::isAttacked(Square square, Side enemySide) const
+{
+	// Check bishop & rook (and queen)
+	auto enemyQueen = toPiece(PieceType::queen, enemySide);
+	for (auto type : { PieceType::bishop, PieceType::rook })
+	{
+		auto attacker = toPiece(type, enemySide);
+		for (auto dir : getInfo(type).dirs)
+		{
+			auto pieceSq { raycast(square, dir) };
+			if (!pieceSq)
+				continue;
+
+			if (auto piece{ get(*pieceSq) }; piece == attacker || piece == enemyQueen)
+				return true;
+		}
+	}
+
+	// Check knight, king, pawn
+	for (auto type : { PieceType::knight, PieceType::king, PieceType::pawn})
+	{
+		auto attacker = toPiece(type, enemySide);
+		for (auto dir : getInfo(attacker).dirs)
+		{
+			Square attackerSq{ square + dir };
+
+			if (!isValid(attackerSq))
+				continue;
+
+			if (auto piece{ get(attackerSq) }; piece == attacker)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+bool Position::isCheck(Side side) const
+{
+	return isAttacked(getKingSq(side), !side);
 }

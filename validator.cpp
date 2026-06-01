@@ -36,29 +36,18 @@ std::optional<Square> disambiguateCandidates(const ParsedMove& move, std::span<c
 std::optional<Square> Validator::generateSlideMove(const ParsedMove& move)
 {
 	std::vector<Square> candidates = {};
-	auto slide = [&](Dir dir)
-		{
-			Square next{ move.to + dir };
-
-			while (isValid(next))
-			{
-				auto piece = getPiece(next);
-				if (!isEmpty(piece))
-				{
-					if (isPiece(piece, move.piece))
-						candidates.push_back(next);
-					break;
-				}
-
-				next += dir;
-			}
-		};
 
 	for (Dir dir : getInfo(move.piece).dirs)
-		slide(dir);
+	{
+		auto from { m_pos.raycast(move.to, dir) };
+		if (!from)
+			continue;
+
+		if (auto piece{ getPiece(*from) }; isPiece(piece, move.piece))
+			candidates.push_back(*from);
+	}
 
 	return disambiguateCandidates(move, candidates);
-
 }
 
 std::optional<Square> Validator::generateJumpMove(const ParsedMove& move)
@@ -67,14 +56,12 @@ std::optional<Square> Validator::generateJumpMove(const ParsedMove& move)
 
 	for (Dir dir : getInfo(move.piece).dirs)
 	{
-		Square next{ move.to + dir };
-
-		if (!isValid(next))
+		auto from{ m_pos.jump(move.to, dir) };
+		if (!from)
 			continue;
 
-		auto piece = getPiece(next);
-		if (isPiece(piece, move.piece))
-			candidates.push_back(next);
+		if (auto piece{ getPiece(*from) }; isPiece(piece, move.piece))
+			candidates.push_back(*from);
 	}
 
 	return disambiguateCandidates(move, candidates);
@@ -85,7 +72,7 @@ std::optional<Square> Validator::generatePieceMove(const ParsedMove& move)
 	// Validate capture
 	if (move.takes)
 	{
-		if (auto capture{ getPiece(move.to) };  isEmpty(capture) || !isEnemy(capture))
+		if (auto capture{ getPiece(move.to) }; isEmpty(capture) || !isEnemy(capture))
 			return std::nullopt;
 	}
 	else if (auto piece{ getPiece(move.to) }; !isEmpty(piece))
@@ -166,6 +153,7 @@ std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
 }
 
 
+
 std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 {
 	const Rank majorRank{ getMajorRank(getSide()) };
@@ -173,9 +161,10 @@ std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 	// TODO: special and castleside maybe should be same thing
 	const bool isKingside = move.special == Special::kingside_castle;
 	const CastleSide castleSide = isKingside ? CastleSide::kingside : CastleSide::queenside;
-	const Dir dir{ isKingside ? 1 : -1, 0 };
+	const Dir dir { isKingside ? 1 : -1, 0 };
 	const File rookFile = isKingside ? File::h : File::a;
 	const File kingFile = isKingside ? File::g : File::c;
+	const Square protectedSq = { isKingside ? File::f : File::d, majorRank };
 
 	Square from{ File::e, majorRank };
 	if (auto king{ getPiece(from) }; isEmpty(king) || !isType(king, PieceType::king))
@@ -184,14 +173,15 @@ std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 	if (!m_pos.getCastleRights(getSide(), castleSide))
 		return std::nullopt;
 
-	// TODO: Check if king can castle without passing through check
-	
-	// Check if pieces in the way
-	for (Square next(from + dir); next.file != rookFile; next += dir)
-	{
-		if (auto piece{ getPiece(next) }; !isEmpty(piece))
-			return std::nullopt;
-	}
+	auto rookSq{ m_pos.raycast(from, dir) };
+	if (!rookSq)
+		return std::nullopt;
+
+	if (auto piece{ getPiece(*rookSq) };!isPiece(piece, PieceType::rook))
+		return std::nullopt;
+
+	if (m_pos.isAttacked(protectedSq, getSide()))
+		return std::nullopt;
 
 	move.to = Square{ kingFile, majorRank };
 	
@@ -201,6 +191,17 @@ std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 static bool isCastle(Special special)
 {
 	return (special == Special::kingside_castle || special == Special::queenside_castle);
+}
+
+bool Validator::validateCheck(ParsedMove& move)
+{
+
+}
+
+
+bool isCheck(Check value)
+{
+	return (value == Check::check);
 }
 
 std::optional<Move> Validator::validate(ParsedMove& move)
@@ -218,11 +219,21 @@ std::optional<Move> Validator::validate(ParsedMove& move)
 	if (!from)
 		return std::nullopt;
 
-	std::optional<Check> isCheck{ move.isCheck };
-	// TODO: Validate check / mate
 
-	if (!isCheck)
+	// TODO: Make move
+
+	if (m_pos.isCheck(getSide()))
+	{
+		// undo move
 		return std::nullopt;
+	}
+	// Validate check was properly mentioned / omitted
+	bool enemyChecked{ m_pos.isCheck(!getSide()) };
+	if (enemyChecked != isCheck(move.isCheck)) // TODO: Once use flags will look cleaner
+	{
+		// undo move
+		return std::nullopt;
+	}
 
 	return Move
 	{
@@ -230,7 +241,7 @@ std::optional<Move> Validator::validate(ParsedMove& move)
 		.from = *from,
 		.to = move.to,
 		.takes = move.takes,
-		.isCheck = *isCheck,
+		.isCheck = move.isCheck,
 		.special = move.special,
 		.promote_to = toPiece(move.promote_to)
 	};

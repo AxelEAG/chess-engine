@@ -21,6 +21,14 @@ public:
 	Side getOppSide() const { return isWhite() ? Side::black : Side::white; }
 	void updateSide()	    { sideToMove = getOppSide(); }
 
+	Square getKingSq(Side side) const;
+	void setKingSq(Side side, Square sq);
+
+	bool isAttacked(Square square, Side side) const;
+	bool isCheck(Side side) const;
+	std::optional<Square> raycast(Square from, Dir dir) const;
+	std::optional<Square> jump(Square from, Dir dir) const;
+
 	bool getCastleRights(Side side, CastleSide castleSide) const;
 	void setCastleRights(Side side, CastleSide castleSide, bool enabled);
 	void setCastleRights(Side side, bool enabled);
@@ -43,6 +51,9 @@ private:
 	std::optional<Square> m_en_passant{};
 	Side sideToMove;
 	std::uint8_t castlingRights;
+	Square whiteKingSq;
+	Square blackKingSq;
+
 	void setPair(Piece piece, File file, Rank rank);
 };
 

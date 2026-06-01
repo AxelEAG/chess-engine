@@ -46,6 +46,11 @@ enum class Side
     black
 };
 
+Side operator!(Side side)
+{
+    return (side == Side::white) ? Side::black : Side::white;
+}
+
 struct PieceInfo
 {
     std::span<const Dir> dirs;
@@ -89,18 +94,28 @@ inline constexpr std::array knight_dirs {
     Dir{-1,  2}
 };
 
+inline constexpr std::array wpawn_dirs{
+    Dir{-1, -1},
+    Dir{ 1, -1}
+};
+
+inline constexpr std::array bpawn_dirs{
+    Dir{-1, 1},
+    Dir{ 1, 1}
+};
+
 inline constexpr std::array<Dir, 0> empty_dirs{};
 
 inline constexpr PieceInfo pieceInfo[] =
 {
     { empty_dirs,  false, '-' },
-    { empty_dirs,  false, 'P' },
+    { wpawn_dirs,  false, 'P' },
     { rook_dirs,   true,  'R' },
     { knight_dirs, false, 'N' },
     { bishop_dirs, true,  'B' },
     { queen_dirs,  true,  'Q' },
     { queen_dirs,  false, 'K' },
-    { empty_dirs,  false, 'p' },
+    { bpawn_dirs,  false, 'p' },
     { rook_dirs,   true,  'r' },
     { knight_dirs, false, 'n' },
     { bishop_dirs, true,  'b' },
