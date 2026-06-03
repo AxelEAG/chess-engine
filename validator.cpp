@@ -180,6 +180,11 @@ std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 	if (auto piece{ getPiece(*rookSq) };!isPiece(piece, PieceType::rook))
 		return std::nullopt;
 
+	// Cannot castle if in check
+	if (m_pos.isAttacked(from, getSide()))
+		return std::nullopt;
+
+	// Cannot castle if passes through check
 	if (m_pos.isAttacked(protectedSq, getSide()))
 		return std::nullopt;
 
@@ -193,9 +198,33 @@ static bool isCastle(Special special)
 	return (special == Special::kingside_castle || special == Special::queenside_castle);
 }
 
-bool Validator::validateCheck(ParsedMove& move)
+bool Validator::validateCheck(Move& move)
 {
+	auto currSide{ getSide() };
+	auto enemySide{ m_pos.getOppSide() };
+	auto undo{ m_pos.doMove(move) };
 
+	// If mover in check after moving, it's illegal
+	if (m_pos.isCheck(currSide))
+	{
+		m_pos.undoMove(move, undo);
+		return false;
+	}
+
+	// Get real check status from position
+	Check isCheck{ Check::none };
+	if (m_pos.isCheck(enemySide))
+		isCheck = m_pos.isCheckmate(enemySide) ? Check::checkmate : Check::check;
+
+	// Validate check/mate matches parsing
+	if (isCheck != move.isCheck)
+	{
+		m_pos.undoMove(move, undo);
+		return false;
+	}
+
+	move.isCheck = isCheck;
+	return true;
 }
 
 
@@ -215,34 +244,21 @@ std::optional<Move> Validator::validate(ParsedMove& move)
 	else
 		from = generatePieceMove(move);
 
-
 	if (!from)
 		return std::nullopt;
 
-
-	// TODO: Make move
-
-	if (m_pos.isCheck(getSide()))
-	{
-		// undo move
-		return std::nullopt;
-	}
-	// Validate check was properly mentioned / omitted
-	bool enemyChecked{ m_pos.isCheck(!getSide()) };
-	if (enemyChecked != isCheck(move.isCheck)) // TODO: Once use flags will look cleaner
-	{
-		// undo move
-		return std::nullopt;
-	}
-
-	return Move
-	{
+	Move tMove{
 		.piece = toPiece(move.piece),
 		.from = *from,
 		.to = move.to,
 		.takes = move.takes,
-		.isCheck = move.isCheck,
+		.isCheck = Check::none, // temporary, hasn't been validated
 		.special = move.special,
 		.promote_to = toPiece(move.promote_to)
 	};
+
+	if (!validateCheck(tMove))
+		return std::nullopt;
+
+	return tMove;
 }
