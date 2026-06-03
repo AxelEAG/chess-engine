@@ -339,6 +339,35 @@ bool Position::isCheckmate(Side side) const
 		}
 	}
 
+	// Check if king can move out of check
+	auto king{ toPiece(PieceType::king, side) };
+	for (auto dir : getInfo(king).dirs)
+	{
+		Square sq{ kingSquare + dir };
+
+		if (!isValid(sq))
+			continue;
+
+		auto piece{ get(sq) };
+		bool takes;
+		if (isEmpty(sq))
+			takes = false;
+		else if (sideOf(piece) != side)
+			takes = true;
+		else
+			continue;
+		
+		Move move{
+			.piece	 = king,
+			.from	 = kingSquare,
+			.to		 = sq,
+			.takes	 = takes
+		};
+		
+
+		// Try move
+		undo {doMove()}
+	}
 	if (enemies.size() == 1)
 	{
 		// Can it be blocked / taken? without getting into another check?

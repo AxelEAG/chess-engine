@@ -87,7 +87,7 @@ int main()
 		}
 
 		std::cout << '\n';
-		position.move(*move);
+		position.doMove(*move);
 		position.printBoard();
 
 		

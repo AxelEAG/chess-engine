@@ -24,9 +24,12 @@ public:
 	Square getKingSq(Side side) const;
 	void setKingSq(Side side, Square sq);
 
+	std::optional<Square> isReachedByPiece(Square sq, Piece reacher) const;
+	std::optional<Square> isReachedBySide(Square sq, Side side) const;
+
 	bool isAttacked(Square square, Side side) const;
 	bool isCheck(Side side) const;
-	bool isCheckmate(Side side) const;
+	bool isCheckmate(Side side);
 	std::optional<Square> raycast(Square from, Dir dir) const;
 	std::optional<Square> jump(Square from, Dir dir) const;
 
