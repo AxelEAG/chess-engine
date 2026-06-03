@@ -54,4 +54,11 @@ struct ParsedMove
 	PieceType promote_to{ PieceType::empty };
 };
 
+struct Undo
+{
+	Piece captured;
+	uint8_t castlingRights;
+	std::optional<Square> en_passant;
+};
+
 #endif

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <utility>
+#include <vector>
 
 std::size_t getIndex(Square sq)
 {
@@ -89,31 +90,59 @@ void Position::handleCastling(const Move& move)
 	}
 }
 
-
-void Position::move(const Move& move)
+Undo Position::doMove(const Move& move)
 {
-	switch (move.special)
+	Undo undo{
+		.castlingRights	 = castlingRights,
+		.en_passant		 = m_en_passant,
+	};
+	
+	if (move.takes)
 	{
-	case Special::en_passant:
-		set(Piece::empty, { move.to.file, move.from.rank }); // Enemy's at same height as pawn but to its left / right
-		break;
-	case Special::double_step:
-		m_en_passant = move.to;
-		break;
-	case Special::queenside_castle:
-		movePiece({ File::a, move.from.rank }, { File::d, move.from.rank });
-		break;
-	case Special::kingside_castle:
-		movePiece({ File::h, move.from.rank }, { File::f, move.from.rank });
-		break;
+		auto captureSq{ (move.special == Special::en_passant) ? *m_en_passant : move.to };
+		undo.captured = get(captureSq);
+		set(Piece::empty, captureSq);
 	}
 
-	handleCastling(move);
-
+	if (move.special == Special::queenside_castle)
+		movePiece({ File::a, move.from.rank }, { File::d, move.from.rank });
+	if (move.special == Special::kingside_castle)
+		movePiece({ File::h, move.from.rank }, { File::f, move.from.rank });
+	
 	movePiece(move.from, move.to);
-	updateSide();
-	m_en_passant.reset(); // en passant only lasts one turn
+	handleCastling(move);
+	if (move.special == Special::promotion)
+		set(move.promote_to, move.to);
 
+	updateSide();
+
+	m_en_passant.reset(); // en passant only lasts one turn
+	if (move.special == Special::double_step)
+		m_en_passant = move.to;
+
+	return undo;
+}
+
+void Position::undoMove(const Move& move, const Undo& undo)
+{
+	updateSide();
+	movePiece(move.to, move.from);
+	if (move.special == Special::promotion)
+		set(toPiece(PieceType::pawn, getSide()), move.from);
+	m_en_passant = undo.en_passant;
+
+	if (move.special == Special::queenside_castle)
+		movePiece({ File::d, move.from.rank }, { File::a, move.from.rank });
+	if (move.special == Special::kingside_castle)
+		movePiece({ File::f, move.from.rank }, { File::h, move.from.rank });
+
+	castlingRights = undo.castlingRights;
+
+	if (move.takes)
+	{
+		auto captureSq{ (move.special == Special::en_passant) ? *undo.en_passant : move.to };
+		set(undo.captured, captureSq);
+	}
 }
 
 void Position::reset()
@@ -266,4 +295,56 @@ bool Position::isAttacked(Square square, Side enemySide) const
 bool Position::isCheck(Side side) const
 {
 	return isAttacked(getKingSq(side), !side);
+}
+
+bool Position::isCheckmate(Side side) const
+{
+	// If only one attacker: Check if can be blocked or taken
+	// Any number: Check if king can move out of the way
+	auto kingSquare{ getKingSq(side) };
+	auto enemySide{ !side };
+	int attackerCount{ 0 };
+
+	std::vector<Square> enemies{};
+
+	// Check knight, pawn
+	for (auto type : { PieceType::knight, PieceType::pawn })
+	{
+		auto attacker = toPiece(type, enemySide);
+		for (auto dir : getInfo(attacker).dirs)
+		{
+			Square attackerSq{ kingSquare + dir };
+
+			if (!isValid(attackerSq))
+				continue;
+
+			if (auto piece{ get(attackerSq) }; piece == attacker)
+				enemies.push_back(attackerSq);
+		}
+	}
+
+	// Check bishop & rook (and queen)
+	auto enemyQueen = toPiece(PieceType::queen, enemySide);
+	for (auto type : { PieceType::bishop, PieceType::rook })
+	{
+		auto attacker = toPiece(type, enemySide);
+		for (auto dir : getInfo(type).dirs)
+		{
+			auto pieceSq{ raycast(kingSquare, dir) };
+			if (!pieceSq)
+				continue;
+
+			if (auto piece{ get(*pieceSq) }; piece == attacker || piece == enemyQueen)
+				enemies.push_back(*pieceSq);
+		}
+	}
+
+	if (enemies.size() == 1)
+	{
+		// Can it be blocked / taken? without getting into another check?
+	}
+
+
+
+	return false;
 }

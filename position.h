@@ -26,6 +26,7 @@ public:
 
 	bool isAttacked(Square square, Side side) const;
 	bool isCheck(Side side) const;
+	bool isCheckmate(Side side) const;
 	std::optional<Square> raycast(Square from, Dir dir) const;
 	std::optional<Square> jump(Square from, Dir dir) const;
 
@@ -34,8 +35,9 @@ public:
 	void setCastleRights(Side side, bool enabled);
 	void handleCastling(const Move& move);
 
-	void move(const Move& move);
+	Undo doMove(const Move& move);
 	void movePiece(Square from, Square to);
+	void undoMove(const Move& move, const Undo& undo);
 
 	void reset();
 	void setup();
