@@ -13,25 +13,15 @@ std::size_t getIndex(Square square);
 class Position
 {
 public:
-	void set(Piece piece, Square sq) { m_board[getIndex(sq)] = piece; }
 	Piece get(Square sq) const { return m_board[getIndex(sq)]; }
+	void set(Piece piece, Square sq) { m_board[getIndex(sq)] = piece; }
+	bool isEmpty(Square sq) const { return (get(sq) == Piece::empty); }
 
 	Side getSide()	  const { return sideToMove; }
-	bool isWhite()    const { return (sideToMove == Side::white); }
-	Side getOppSide() const { return isWhite() ? Side::black : Side::white; }
-	void updateSide()	    { sideToMove = getOppSide(); }
+	void updateSide()	    { sideToMove = !sideToMove; }
 
 	Square getKingSq(Side side) const;
 	void setKingSq(Side side, Square sq);
-
-	std::optional<Square> isReachedByPiece(Square sq, Piece reacher) const;
-	std::optional<Square> isReachedBySide(Square sq, Side side) const;
-
-	bool isAttacked(Square square, Side side) const;
-	bool isCheck(Side side) const;
-	bool isCheckmate(Side side);
-	std::optional<Square> raycast(Square from, Dir dir) const;
-	std::optional<Square> jump(Square from, Dir dir) const;
 
 	bool getCastleRights(Side side, CastleSide castleSide) const;
 	void setCastleRights(Side side, CastleSide castleSide, bool enabled);
@@ -44,8 +34,6 @@ public:
 
 	void reset();
 	void setup();
-
-	bool isEmpty(Square sq) const { return (m_board[getIndex(sq)] == Piece::empty); }
 
 	std::optional<Square> getEnPassant() const { return m_en_passant; }
 	Position() { reset(); setup(); };

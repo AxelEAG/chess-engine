@@ -14,13 +14,15 @@ public:
     {
     }
 
-    bool eof()  const { return m_pos >= m_input.size();}
-    char peek() const { return eof() ? '\0' : m_input[m_pos]; }
-    auto mark() const { return m_pos; }
-    void rewind(std::size_t pos) { m_pos = pos; }
-    bool consume(char expected);
-
+    bool eof()  const { return m_pos >= m_input.size(); }
     std::optional<ParsedMove> parseMove();
+
+private:
+    std::string_view m_input;
+    std::size_t m_pos{};
+
+    char peek() const { return eof() ? '\0' : m_input[m_pos]; }
+    bool consume(char expected);
 
     std::optional<ParsedMove> parseCastle();
     std::optional<ParsedMove> parsePieceMove();
@@ -34,10 +36,6 @@ public:
     std::optional<PieceType>  parsePromotionPiece();
     bool parsePromotion(ParsedMove& move);
     void parseCheck(ParsedMove& move);
-
-private:
-    std::string_view m_input;
-    std::size_t m_pos{};
 };
 
 #endif

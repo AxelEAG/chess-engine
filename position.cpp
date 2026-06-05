@@ -9,37 +9,6 @@ std::size_t getIndex(Square sq)
 	return (Rank::max_ranks * sq.rank + sq.file);
 }
 
-
-bool isValid(Square sq)
-{
-	return (sq.file >= File::a && sq.file < File::max_files &&
-			sq.rank >= Rank::r8 && sq.rank < Rank::max_ranks);
-}
-
-std::optional<Square> Position::raycast(Square from, Dir dir) const
-{
-	Square next{ from + dir };
-
-	while (isValid(next))
-	{
-		if (!isEmpty(next))
-			return next;
-
-		next += dir;
-	}
-	return std::nullopt;
-}
-
-std::optional<Square> Position::jump(Square from, Dir dir) const
-{
-	Square next{ from + dir };
-
-	if (!isValid(next) || isEmpty(next))
-		return std::nullopt;
-
-	return next;
-}
-
 Square Position::getKingSq(Side side) const
 {
 	return (side == Side::white) ? whiteKingSq : blackKingSq;
@@ -51,16 +20,6 @@ void Position::setKingSq(Side side, Square sq)
 		whiteKingSq = sq;
 	else
 		blackKingSq = sq;
-}
-
-void Position::movePiece(Square from, Square to)
-{
-	auto piece{ get(from) };
-	if (isType(piece, PieceType::king))
-		setKingSq(getSide(), to);
-
-	set(piece		, to);
-	set(Piece::empty, from);
 }
 
 void Position::handleCastling(const Move& move)
@@ -83,11 +42,22 @@ void Position::handleCastling(const Move& move)
 	// Rook capture
 	if (auto capture{ get(move.to) }; isType(capture, PieceType::rook))
 	{
-		if (move.to == QueensRookSq(getOppSide()))
-			setCastleRights(getOppSide(), CastleSide::queenside, false);
-		else if (move.to == KingsRookSq(getOppSide()))
-			setCastleRights(getOppSide(), CastleSide::kingside, false);
+		auto enemySide{ !getSide() };
+		if (move.to == QueensRookSq(enemySide))
+			setCastleRights(enemySide, CastleSide::queenside, false);
+		else if (move.to == KingsRookSq(enemySide))
+			setCastleRights(enemySide, CastleSide::kingside, false);
 	}
+}
+
+void Position::movePiece(Square from, Square to)
+{
+	auto piece{ get(from) };
+	if (isType(piece, PieceType::king))
+		setKingSq(getSide(), to);
+
+	set(piece, to);
+	set(Piece::empty, from);
 }
 
 Undo Position::doMove(const Move& move)
@@ -161,8 +131,8 @@ void Position::setup()
 {
 	for (Side side : { Side::white, Side::black })
 	{
-		Rank majorRank { side == Side::white ? Rank::r1 : Rank::r8 };
-		Rank pawnRank  { side == Side::white ? Rank::r2 : Rank::r7 };
+		Rank majorRank{ getMajorRank(side) };
+		Rank pawnRank{ getPawnRank(side) };
 
 		setPair(toPiece(PieceType::rook  , side), File::a, majorRank);
 		setPair(toPiece(PieceType::knight, side), File::b, majorRank);
@@ -251,129 +221,4 @@ void Position::setCastleRights(Side side, bool enabled)
 		castlingRights |= castleMask(side);
 	else
 		castlingRights &= ~castleMask(side);
-}
-
-
-// Checks if diff pieces can attack the square
-bool Position::isAttacked(Square square, Side enemySide) const
-{
-	// Check bishop & rook (and queen)
-	auto enemyQueen = toPiece(PieceType::queen, enemySide);
-	for (auto type : { PieceType::bishop, PieceType::rook })
-	{
-		auto attacker = toPiece(type, enemySide);
-		for (auto dir : getInfo(type).dirs)
-		{
-			auto pieceSq { raycast(square, dir) };
-			if (!pieceSq)
-				continue;
-
-			if (auto piece{ get(*pieceSq) }; piece == attacker || piece == enemyQueen)
-				return true;
-		}
-	}
-
-	// Check knight, king, pawn
-	for (auto type : { PieceType::knight, PieceType::king, PieceType::pawn})
-	{
-		auto attacker = toPiece(type, enemySide);
-		for (auto dir : getInfo(attacker).dirs)
-		{
-			Square attackerSq{ square + dir };
-
-			if (!isValid(attackerSq))
-				continue;
-
-			if (auto piece{ get(attackerSq) }; piece == attacker)
-				return true;
-		}
-	}
-
-	return false;
-}
-
-bool Position::isCheck(Side side) const
-{
-	return isAttacked(getKingSq(side), !side);
-}
-
-bool Position::isCheckmate(Side side) const
-{
-	// If only one attacker: Check if can be blocked or taken
-	// Any number: Check if king can move out of the way
-	auto kingSquare{ getKingSq(side) };
-	auto enemySide{ !side };
-	int attackerCount{ 0 };
-
-	std::vector<Square> enemies{};
-
-	// Check knight, pawn
-	for (auto type : { PieceType::knight, PieceType::pawn })
-	{
-		auto attacker = toPiece(type, enemySide);
-		for (auto dir : getInfo(attacker).dirs)
-		{
-			Square attackerSq{ kingSquare + dir };
-
-			if (!isValid(attackerSq))
-				continue;
-
-			if (auto piece{ get(attackerSq) }; piece == attacker)
-				enemies.push_back(attackerSq);
-		}
-	}
-
-	// Check bishop & rook (and queen)
-	auto enemyQueen = toPiece(PieceType::queen, enemySide);
-	for (auto type : { PieceType::bishop, PieceType::rook })
-	{
-		auto attacker = toPiece(type, enemySide);
-		for (auto dir : getInfo(type).dirs)
-		{
-			auto pieceSq{ raycast(kingSquare, dir) };
-			if (!pieceSq)
-				continue;
-
-			if (auto piece{ get(*pieceSq) }; piece == attacker || piece == enemyQueen)
-				enemies.push_back(*pieceSq);
-		}
-	}
-
-	// Check if king can move out of check
-	auto king{ toPiece(PieceType::king, side) };
-	for (auto dir : getInfo(king).dirs)
-	{
-		Square sq{ kingSquare + dir };
-
-		if (!isValid(sq))
-			continue;
-
-		auto piece{ get(sq) };
-		bool takes;
-		if (isEmpty(sq))
-			takes = false;
-		else if (sideOf(piece) != side)
-			takes = true;
-		else
-			continue;
-		
-		Move move{
-			.piece	 = king,
-			.from	 = kingSquare,
-			.to		 = sq,
-			.takes	 = takes
-		};
-		
-
-		// Try move
-		undo {doMove()}
-	}
-	if (enemies.size() == 1)
-	{
-		// Can it be blocked / taken? without getting into another check?
-	}
-
-
-
-	return false;
 }

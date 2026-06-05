@@ -1,9 +1,13 @@
 #include "validator.h"
+
 #include <span>
 #include <vector>
 #include <iostream>
 
 bool isValid(Square sq);
+std::optional<Square> pawnPush(const Position& pos, Square to, Side side);
+std::optional<Square> pawnDoublePush(const Position& pos, Square to, Side side);
+bool pawnEnPassant(const Position& pos, Square to, Side side);
 
 std::optional<Square> disambiguateCandidates(const ParsedMove& move, std::span<const Square> candidates)
 {
@@ -33,130 +37,78 @@ std::optional<Square> disambiguateCandidates(const ParsedMove& move, std::span<c
 	return match;
 }
 
-std::optional<Square> Validator::generateSlideMove(const ParsedMove& move)
-{
-	std::vector<Square> candidates = {};
-
-	for (Dir dir : getInfo(move.piece).dirs)
-	{
-		auto from { m_pos.raycast(move.to, dir) };
-		if (!from)
-			continue;
-
-		if (auto piece{ getPiece(*from) }; isPiece(piece, move.piece))
-			candidates.push_back(*from);
-	}
-
-	return disambiguateCandidates(move, candidates);
-}
-
-std::optional<Square> Validator::generateJumpMove(const ParsedMove& move)
-{
-	std::vector<Square> candidates = {};
-
-	for (Dir dir : getInfo(move.piece).dirs)
-	{
-		auto from{ m_pos.jump(move.to, dir) };
-		if (!from)
-			continue;
-
-		if (auto piece{ getPiece(*from) }; isPiece(piece, move.piece))
-			candidates.push_back(*from);
-	}
-
-	return disambiguateCandidates(move, candidates);
-}
-
-std::optional<Square> Validator::generatePieceMove(const ParsedMove& move)
+std::optional<Square> Validator::generatePieceMove(ParsedMove& move)
 {
 	// Validate capture
 	if (move.takes)
 	{
-		if (auto capture{ getPiece(move.to) }; isEmpty(capture) || !isEnemy(capture))
+		if (auto capture{ m_pos.get(move.to) }; isEmpty(capture) || sideOf(capture) == m_pos.getSide())
 			return std::nullopt;
 	}
-	else if (auto piece{ getPiece(move.to) }; !isEmpty(piece))
+	else if (auto piece{ m_pos.get(move.to) }; !isEmpty(piece))
 		return std::nullopt;
 
-	if (getInfo(move.piece).canSlide)
-		return generateSlideMove(move);
 
-	return generateJumpMove(move);
+	std::vector<Square> candidates{};
+	auto piece{ toPiece(move.piece, m_pos.getSide()) };
+	visitAttackers(m_pos, move.to, piece, [&](Square sq) {candidates.push_back(sq); return true; });
+
+	return disambiguateCandidates(move, candidates);
 }
 
 std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
 {
-	int  forward	{ isWhite() ?  -1 : 1 };
+	const Side side { m_pos.getSide() };
+	int  forward	{ pawnDir(side) };
 	Dir  revDir		{ 0, -1 * forward };
-	Rank startRank	{ isWhite() ? Rank::r2 : Rank::r7};
-	Rank lastRank	{ isWhite() ? Rank::r8 : Rank::r1};
 
 	// Invalid promotion
-	if ((move.special == Special::promotion) && (move.to.rank != lastRank))
+	if ((move.special == Special::promotion) && (move.to.rank != getPromotionRank(side)))
 		return std::nullopt;
 
 	if (move.takes)
 	{
 		Square from{ *move.fromFile, move.to.rank - forward };
-		if (auto pawn = getPiece(from); !isPiece(pawn, PieceType::pawn))
+		auto pawn{ toPiece(PieceType::pawn, side) };
+		if (auto piece{ m_pos.get(from) }; piece != pawn)
 			return std::nullopt;
 
-		if (auto capture{ getPiece(move.to) }; !isEmpty(capture))
+		if (auto capture{ m_pos.get(move.to) }; !isEmpty(capture))
 		{
-			if (isEnemy(capture))
+			if (sideOf(capture) == !side)
 				return from;
 
 			return std::nullopt;
 		}
 
-		auto en_passant{ m_pos.getEnPassant() };
-		if (!en_passant)
-			return std::nullopt;
-
-		Square enemySq{ move.to.file, from.rank };
-		auto enemy{ getPiece(enemySq) };
-		if (isEmpty(enemy) || !isEnemy(enemy))
-			return std::nullopt;
-
-		if (enemySq == *en_passant)
+		if (pawnEnPassant(m_pos, move.to, side))
 		{
 			move.special = Special::en_passant;
 			return from;
 		}
+
 		return std::nullopt;
 	}
 
-	// Check regular push
-	if (auto to{ getPiece(move.to) };!isEmpty(to))
+	if (!m_pos.isEmpty(move.to))
 		return std::nullopt;
 
-	Square push{ move.to + revDir };
-	if (auto piece = getPiece(push); !isEmpty(piece))
-	{
-		if (isPiece(piece, PieceType::pawn))
-			return push;
-		return std::nullopt;
-	}
+	if (auto push{ pawnPush(m_pos, move.to, side) })
+		return push;
 
-	Square dbPush{ push + revDir };
-	if (auto piece = getPiece(dbPush); !isEmpty(piece))
+	if (auto doublePush{ pawnDoublePush(m_pos, move.to, side) })
 	{
-		if (isPiece(piece, move.piece) && dbPush.rank == startRank)
-		{
-			move.special = Special::double_step;
-			return dbPush;
-		}
-		return std::nullopt;
+		move.special = Special::double_step;
+		return doublePush;
 	}
 
 	return std::nullopt;
 }
 
-
-
 std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 {
-	const Rank majorRank{ getMajorRank(getSide()) };
+	const Side side{ m_pos.getSide() };
+	const Rank majorRank{ getMajorRank(side) };
 
 	// TODO: special and castleside maybe should be same thing
 	const bool isKingside = move.special == Special::kingside_castle;
@@ -167,25 +119,26 @@ std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 	const Square protectedSq = { isKingside ? File::f : File::d, majorRank };
 
 	Square from{ File::e, majorRank };
-	if (auto king{ getPiece(from) }; isEmpty(king) || !isType(king, PieceType::king))
+	if (auto king{ m_pos.get(from) }; isEmpty(king) || !isType(king, PieceType::king))
 		return std::nullopt;
 
-	if (!m_pos.getCastleRights(getSide(), castleSide))
+	if (!m_pos.getCastleRights(side, castleSide))
 		return std::nullopt;
 
-	auto rookSq{ m_pos.raycast(from, dir) };
+	auto rookSq{ raycast(m_pos, from, dir) };
 	if (!rookSq)
 		return std::nullopt;
 
-	if (auto piece{ getPiece(*rookSq) };!isPiece(piece, PieceType::rook))
+	auto rook{ toPiece(PieceType::rook, m_pos.getSide()) };
+	if (auto piece{ m_pos.get(*rookSq) }; piece != rook)
 		return std::nullopt;
 
 	// Cannot castle if in check
-	if (m_pos.isAttacked(from, getSide()))
+	if (isAttacked(m_pos, from, side))
 		return std::nullopt;
 
 	// Cannot castle if passes through check
-	if (m_pos.isAttacked(protectedSq, getSide()))
+	if (isAttacked(m_pos, protectedSq, side))
 		return std::nullopt;
 
 	move.to = Square{ kingFile, majorRank };
@@ -193,51 +146,42 @@ std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 	return from;
 }
 
-static bool isCastle(Special special)
-{
-	return (special == Special::kingside_castle || special == Special::queenside_castle);
-}
 
 bool Validator::validateCheck(Move& move)
 {
-	auto currSide{ getSide() };
-	auto enemySide{ m_pos.getOppSide() };
+	const Side currSide { m_pos.getSide() };
+	const Side enemySide{ !currSide };
 	auto undo{ m_pos.doMove(move) };
 
 	// If mover in check after moving, it's illegal
-	if (m_pos.isCheck(currSide))
+	if (isCheck(m_pos, currSide))
 	{
 		m_pos.undoMove(move, undo);
 		return false;
 	}
 
 	// Get real check status from position
-	Check isCheck{ Check::none };
-	if (m_pos.isCheck(enemySide))
-		isCheck = m_pos.isCheckmate(enemySide) ? Check::checkmate : Check::check;
+	Check check{ Check::none };
+	if (isCheck(m_pos, enemySide))
+		check = isCheckmate(m_pos, enemySide) ? Check::checkmate : Check::check;
 
 	// Validate check/mate matches parsing
-	if (isCheck != move.isCheck)
+	if (check != move.isCheck)
 	{
 		m_pos.undoMove(move, undo);
 		return false;
 	}
 
-	move.isCheck = isCheck;
+	move.isCheck = check;
 	return true;
 }
 
-
-bool isCheck(Check value)
-{
-	return (value == Check::check);
-}
 
 std::optional<Move> Validator::validate(ParsedMove& move)
 {
 	std::optional<Square> from = std::nullopt;
 
-	if (isCastle(move.special))
+	if (move.special == Special::kingside_castle || move.special == Special::queenside_castle)
 		from = generateCastleMove(move);
 	else if (move.piece == PieceType::pawn)
 		from = generatePawnMove(move);
@@ -248,13 +192,13 @@ std::optional<Move> Validator::validate(ParsedMove& move)
 		return std::nullopt;
 
 	Move tMove{
-		.piece = toPiece(move.piece),
+		.piece = toPiece(move.piece, m_pos.getSide()),
 		.from = *from,
 		.to = move.to,
 		.takes = move.takes,
 		.isCheck = Check::none, // temporary, hasn't been validated
 		.special = move.special,
-		.promote_to = toPiece(move.promote_to)
+		.promote_to = toPiece(move.promote_to, m_pos.getSide())
 	};
 
 	if (!validateCheck(tMove))

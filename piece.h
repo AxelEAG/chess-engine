@@ -46,7 +46,7 @@ enum class Side
     black
 };
 
-Side operator!(Side side)
+inline constexpr Side operator!(Side side)
 {
     return (side == Side::white) ? Side::black : Side::white;
 }
@@ -123,27 +123,23 @@ inline constexpr PieceInfo pieceInfo[] =
     { queen_dirs,  false, 'k' }
 };
 
+constexpr int pawnDir(Side side)
+{
+    return (side == Side::white) ? -1 : 1;
+}
+
 constexpr bool isEmpty(Piece piece)
 {
     return piece == Piece::empty;
 }
 
-constexpr bool isWhite(Piece piece)
-{
-    assert(!isEmpty(piece));
-    return (piece >= Piece::white_pawn && piece <= Piece::white_king);
-}
-
-constexpr bool isBlack(Piece piece)
-{
-    assert(!isEmpty(piece));
-    return (piece >= Piece::black_pawn && piece <= Piece::black_king);
-}
-
 constexpr Side sideOf(Piece piece)
 {
     assert(!isEmpty(piece));
-    return (isWhite(piece) ? Side::white : Side::black);
+    if (piece >= Piece::white_pawn && piece <= Piece::white_king)
+        return Side::white;
+    else
+        return Side::black;
 }
 
 constexpr PieceType typeOf(Piece piece)
@@ -218,6 +214,11 @@ constexpr const PieceInfo& getInfo(Piece piece)
 constexpr Rank getMajorRank(Side side)
 {
     return (side == Side::white ? Rank::r1 : Rank::r8);
+}
+
+constexpr Rank getPromotionRank(Side side)
+{
+    return (side == Side::white ? Rank::r8 : Rank::r1);
 }
 
 constexpr Rank getPawnRank(Side side)
