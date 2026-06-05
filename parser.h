@@ -6,6 +6,9 @@
 #include <string_view>
 #include <optional>
 
+// Parser class for a given string move. 
+// Performs no validation, only syntax check.
+// Returns a proper object move if syntactically valid.
 
 class Parser
 {
@@ -14,14 +17,14 @@ public:
     {
     }
 
-    bool eof()  const { return m_pos >= m_input.size(); }
+    bool eof()  const;
     std::optional<ParsedMove> parseMove();
 
 private:
     std::string_view m_input;
     std::size_t m_pos{};
 
-    char peek() const { return eof() ? '\0' : m_input[m_pos]; }
+    char peek() const;
     bool consume(char expected);
 
     std::optional<ParsedMove> parseCastle();
