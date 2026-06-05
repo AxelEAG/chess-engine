@@ -24,7 +24,7 @@ bool Parser::consume(char expected)
 
 std::optional<File> Parser::parseFile()
 {
-    const char c = peek();
+    const char c{ peek() };
 
     if (c < 'a' || c > 'h')
         return std::nullopt;
@@ -35,7 +35,7 @@ std::optional<File> Parser::parseFile()
 
 std::optional<Rank> Parser::parseRank()
 {
-    const char c = peek();
+    const char c{ peek() };
 
     if (c < '1' || c > '8')
         return std::nullopt;
@@ -46,11 +46,11 @@ std::optional<Rank> Parser::parseRank()
 
 std::optional<Square> Parser::parseSquare()
 {
-    const auto file = parseFile();
+    const auto file{ parseFile() };
     if (!file)
         return std::nullopt;
 
-    const auto rank = parseRank();
+    const auto rank{ parseRank() };
     if (!rank)
         return std::nullopt;
 
@@ -112,7 +112,7 @@ bool Parser::parsePromotion(ParsedMove& move)
     if (!consume('='))
         return true;
 
-    const auto promoteTo = parsePromotionPiece();
+    const auto promoteTo{ parsePromotionPiece() };
     if (!promoteTo)
         return false;
 
@@ -163,7 +163,7 @@ std::optional<ParsedMove> Parser::parseCastle()
 
 std::optional<ParsedMove> Parser::parsePieceMove()
 {
-    auto piece = parsePiece();
+    auto piece{ parsePiece() };
     if (!piece)
         return std::nullopt;
 
@@ -171,12 +171,12 @@ std::optional<ParsedMove> Parser::parsePieceMove()
     move.piece = *piece;
 
     // Optional Disambiguation (Could be either, full square or none)
-    const auto optFile = parseFile();
-    const auto optRank = parseRank();
+    const auto optFile{ parseFile() };
+    const auto optRank{ parseRank() };
 
     move.takes = consume('x'); // Optional capture
 
-    const auto toSquare = parseSquare();
+    const auto toSquare{ parseSquare() };
     if (toSquare)
     {
         // Given info was disambiguation
@@ -198,7 +198,7 @@ std::optional<ParsedMove> Parser::parsePieceMove()
 std::optional<ParsedMove> Parser::parsePawnMove()
 {
     // Pawn moves always start with a file - represents either to or from where 
-    const auto file = parseFile();
+    const auto file{ parseFile() };
     if (!file)
         return std::nullopt;
 
@@ -208,7 +208,7 @@ std::optional<ParsedMove> Parser::parsePawnMove()
     // Check capture
     if (consume('x'))
     {
-        const auto to = parseSquare();
+        const auto to{ parseSquare() };
 
         if (!to)
             return std::nullopt;
@@ -218,7 +218,7 @@ std::optional<ParsedMove> Parser::parsePawnMove()
         move.takes = true;
     }
     // Check simple move
-    else if (auto rank = parseRank())
+    else if (auto rank{ parseRank() })
         move.to = Square{ *file, *rank };
     else
         return std::nullopt;
@@ -234,13 +234,13 @@ std::optional<ParsedMove> Parser::parsePawnMove()
 
 std::optional<ParsedMove> Parser::parseMove()
 {
-    if (auto move = parseCastle())
+    if (auto move{ parseCastle() })
         return move;
 
-    if (auto move = parsePawnMove())
+    if (auto move{ parsePawnMove() })
         return move;
 
-    if (auto move = parsePieceMove())
+    if (auto move{ parsePieceMove() })
         return move;
 
     return std::nullopt;
@@ -251,7 +251,7 @@ std::optional<ParsedMove> parseMove(std::string_view text)
 {
     Parser p{ text };
 
-    const auto move = p.parseMove();
+    const auto move{ p.parseMove() };
 
     if (!move)
         return std::nullopt;
