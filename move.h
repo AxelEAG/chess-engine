@@ -115,7 +115,7 @@ constexpr MoveFlags toPromoteFlag(PieceType type)
 		return promoteQueen;
 	default:
 		assert(0 && "toPromoteFlag: should not be called with unpromotable pieces");
-		return;
+		return none;
 	}
 }
 
@@ -133,7 +133,7 @@ constexpr MoveFlags toCapturePromoteFlag(PieceType type)
 		return capturePromoteQueen;
 	default:
 		assert(0 && "toCapturePromoteFlag: should not be called with unpromotable pieces");
-		return;
+		return none;
 	}
 }
 
@@ -155,7 +155,7 @@ constexpr PieceType promotionPieceType(const Move& move)
 		return PieceType::queen;
 	default:
 		assert(0 && "promotionPiece: should not be called with non-promotion move");
-		return;
+		return PieceType::empty;
 	}
 }
 

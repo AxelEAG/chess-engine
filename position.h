@@ -51,7 +51,7 @@ private:
 	void removeCastleRights(Side side);
 };
 
-constexpr std::size_t getIndex(Square sq) {
+inline std::size_t getIndex(Square sq) {
 	return (Rank::max_ranks * sq.rank + sq.file);
 }
 

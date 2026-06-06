@@ -177,6 +177,8 @@ constexpr PieceType typeOf(Piece piece)
 
 constexpr Piece toPiece(PieceType type, Side side)
 {
+    assert(!(type == PieceType::empty) && "toPiece: should not be called on empty piece");
+
     switch (type)
     {
     case PieceType::pawn:
@@ -192,8 +194,7 @@ constexpr Piece toPiece(PieceType type, Side side)
     case PieceType::king:
         return (side == Side::white) ? Piece::white_king   : Piece::black_king;
     default:
-        assert(0 && "toPiece: should not be called on empty piece");
-        return;
+        return Piece::empty;
     }
 }
 
@@ -212,39 +213,39 @@ constexpr const PieceInfo& getInfo(Piece piece)
     return pieceInfo[static_cast<std::size_t>(piece)];
 }
 
-constexpr Rank MajorRank(Side side)
+inline Rank MajorRank(Side side)
 {
     return (side == Side::white ? Rank::r1 : Rank::r8);
 }
 
-constexpr Rank PromotionRank(Side side)
+inline Rank PromotionRank(Side side)
 {
     return (side == Side::white ? Rank::r8 : Rank::r1);
 }
 
-constexpr Rank PawnRank(Side side)
+inline Rank PawnRank(Side side)
 {
     return (side == Side::white ? Rank::r2 : Rank::r7);
 }
 
-constexpr Square QueensRookSq(Side side)
+inline Square QueensRookSq(Side side)
 {
-    return { File::a, MajorRank(side) };
+    return Square { File::a, MajorRank(side) };
 }
 
-constexpr Square QueensRookCastleSq(Side side)
+inline Square QueensRookCastleSq(Side side)
 {
-    return { File::d, MajorRank(side) };
+    return Square { File::d, MajorRank(side) };
 }
 
-constexpr Square KingsRookSq(Side side)
+inline Square KingsRookSq(Side side)
 {
-    return { File::h, MajorRank(side) };
+    return Square { File::h, MajorRank(side) };
 }
 
-constexpr Square KingsRookCastleSq(Side side)
+inline Square KingsRookCastleSq(Side side)
 {
-    return { File::f, MajorRank(side) };
+    return Square { File::f, MajorRank(side) };
 }
 
 #endif

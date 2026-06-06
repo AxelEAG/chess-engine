@@ -18,7 +18,7 @@ private:
 	std::optional<Square> generatePawnMove(ParsedMove& move);
 	std::optional<Square> generateCastleMove(ParsedMove& move);
 
-	bool validateCheck(Move& move);
+	bool validateCheck(ParsedMove& pmove);
 
 };
 
