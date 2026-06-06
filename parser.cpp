@@ -153,11 +153,11 @@ std::optional<ParsedMove> Parser::parseCastle()
     {
         if (!consume('O'))
             return std::nullopt;
-        move.flags = kingCastle;
+        move.flags = queenCastle;
     }
     // Kingside castle
     else
-        move.flags = queenCastle;
+        move.flags = kingCastle;
 
     parseCheck(move);
 
