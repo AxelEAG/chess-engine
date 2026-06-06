@@ -211,17 +211,17 @@ constexpr const PieceInfo& getInfo(Piece piece)
     return pieceInfo[static_cast<std::size_t>(piece)];
 }
 
-constexpr Rank getMajorRank(Side side)
+constexpr Rank MajorRank(Side side)
 {
     return (side == Side::white ? Rank::r1 : Rank::r8);
 }
 
-constexpr Rank getPromotionRank(Side side)
+constexpr Rank PromotionRank(Side side)
 {
     return (side == Side::white ? Rank::r8 : Rank::r1);
 }
 
-constexpr Rank getPawnRank(Side side)
+constexpr Rank PawnRank(Side side)
 {
     return (side == Side::white ? Rank::r2 : Rank::r7);
 }

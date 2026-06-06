@@ -8,46 +8,54 @@
 #include <memory>
 #include <optional>
 
-std::size_t getIndex(Square square);
+std::size_t getIndex(Square sq);
 
 class Position
 {
 public:
-	Piece get(Square sq) const { return m_board[getIndex(sq)]; }
-	void set(Piece piece, Square sq) { m_board[getIndex(sq)] = piece; }
-	bool isEmpty(Square sq) const { return (get(sq) == Piece::empty); }
+	Position() { setup(); };
 
-	Side getSide()	  const { return sideToMove; }
-	void updateSide()	    { sideToMove = !sideToMove; }
-
-	Square getKingSq(Side side) const;
-	void setKingSq(Side side, Square sq);
-
-	bool getCastleRights(Side side, CastleSide castleSide) const;
-	void setCastleRights(Side side, CastleSide castleSide, bool enabled);
-	void setCastleRights(Side side, bool enabled);
-	void handleCastling(const Move& move);
-
-	Undo doMove(const Move& move);
-	void movePiece(Square from, Square to);
+	Undo   doMove(const Move& move);
 	void undoMove(const Move& move, const Undo& undo);
 
-	void reset();
+	Piece    get(Square sq)	const { return m_board[getIndex(sq)]; }
+	bool isEmpty(Square sq) const { return (get(sq) == Piece::empty); }
+
+	Side   getSide() const { return m_sideToMove; }
+	Square getKingSq(Side side) const;
+	bool   getCastleRights(Side side, CastleSide castleSide) const;
+	std::optional<Square>  getEnPassant() const { return m_enPassant; }
+
 	void setup();
 
-	std::optional<Square> getEnPassant() const { return m_en_passant; }
-	Position() { reset(); setup(); };
-
-	void printBoard();
 private:
 	std::array<Piece, 64> m_board;
-	std::optional<Square> m_en_passant{};
-	Side sideToMove;
 	std::uint8_t castlingRights;
-	Square whiteKingSq;
-	Square blackKingSq;
+	std::optional<Square>  m_enPassant{};
+	Square m_whiteKingSq;
+	Square m_blackKingSq;
+	Side   m_sideToMove;
 
+	void resetBoard();
+	void set(Piece piece, Square sq) { m_board[getIndex(sq)] = piece; }
 	void setPair(Piece piece, File file, Rank rank);
+	void movePiece(Square from, Square to);
+
+	void updateSide() { m_sideToMove = !getSide(); }
+	void setKingSq(Side side, Square sq);
+
+	void handleCapture(const Move& move, Undo& undo);
+	void handlePromotion(const Move& move);
+	void handleEnPassant(const Move& move);
+	void handleCastling(const Move& move);
+	void setCastleRights(Side side, CastleSide castleSid);
+	void setCastleRights(Side side);
+	void removeCastleRights(Side side, CastleSide castleSide);
+	void removeCastleRights(Side side);
 };
+
+inline std::size_t getIndex(Square sq) {
+	return (Rank::max_ranks * sq.rank + sq.file);
+}
 
 #endif 

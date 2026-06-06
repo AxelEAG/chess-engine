@@ -4,52 +4,6 @@
 #include <utility>
 #include <vector>
 
-std::size_t getIndex(Square sq)
-{
-	return (Rank::max_ranks * sq.rank + sq.file);
-}
-
-Square Position::getKingSq(Side side) const
-{
-	return (side == Side::white) ? whiteKingSq : blackKingSq;
-}
-
-void Position::setKingSq(Side side, Square sq)
-{
-	if (side == Side::white)
-		whiteKingSq = sq;
-	else
-		blackKingSq = sq;
-}
-
-void Position::handleCastling(const Move& move)
-{	
-	auto piece{ get(move.from) };
-
-	// King move
-	if (isType(piece, PieceType::king))
-		setCastleRights(getSide(), false);
-
-	// Rook move
-	if (isType(piece, PieceType::rook))
-	{
-		if (move.from == QueensRookSq(getSide()))
-			setCastleRights(getSide(), CastleSide::queenside, false);
-		else if (move.from == KingsRookSq(getSide()))
-			setCastleRights(getSide(), CastleSide::kingside, false);
-	}
-
-	// Rook capture
-	if (auto capture{ get(move.to) }; isType(capture, PieceType::rook))
-	{
-		auto enemySide{ !getSide() };
-		if (move.to == QueensRookSq(enemySide))
-			setCastleRights(enemySide, CastleSide::queenside, false);
-		else if (move.to == KingsRookSq(enemySide))
-			setCastleRights(enemySide, CastleSide::kingside, false);
-	}
-}
-
 void Position::movePiece(Square from, Square to)
 {
 	auto piece{ get(from) };
@@ -63,32 +17,17 @@ void Position::movePiece(Square from, Square to)
 Undo Position::doMove(const Move& move)
 {
 	Undo undo{
-		.castlingRights	 = castlingRights,
-		.en_passant		 = m_en_passant,
+		.castlingRights	= castlingRights,
+		.enPassant = getEnPassant(),
 	};
 	
-	if (move.takes)
-	{
-		auto captureSq{ (move.special == Special::en_passant) ? *m_en_passant : move.to };
-		undo.captured = get(captureSq);
-		set(Piece::empty, captureSq);
-	}
-
-	if (move.special == Special::queenside_castle)
-		movePiece({ File::a, move.from.rank }, { File::d, move.from.rank });
-	if (move.special == Special::kingside_castle)
-		movePiece({ File::h, move.from.rank }, { File::f, move.from.rank });
-	
+	handleCapture(move, undo);
 	movePiece(move.from, move.to);
 	handleCastling(move);
-	if (move.special == Special::promotion)
-		set(move.promote_to, move.to);
+	handlePromotion(move);
 
 	updateSide();
-
-	m_en_passant.reset(); // en passant only lasts one turn
-	if (move.special == Special::double_step)
-		m_en_passant = move.to;
+	handleEnPassant(move);
 
 	return undo;
 }
@@ -96,96 +35,126 @@ Undo Position::doMove(const Move& move)
 void Position::undoMove(const Move& move, const Undo& undo)
 {
 	updateSide();
+	const auto side{ getSide() };
 	movePiece(move.to, move.from);
-	if (move.special == Special::promotion)
-		set(toPiece(PieceType::pawn, getSide()), move.from);
-	m_en_passant = undo.en_passant;
 
-	if (move.special == Special::queenside_castle)
-		movePiece({ File::d, move.from.rank }, { File::a, move.from.rank });
-	if (move.special == Special::kingside_castle)
-		movePiece({ File::f, move.from.rank }, { File::h, move.from.rank });
+	// Undo Promotion
+	if (move.special == Special::promotion)
+		set(toPiece(PieceType::pawn, side), move.from);
+
+	m_enPassant = undo.enPassant;
+
+	// Undo Castling
+	if (move.special == Special::queensideCastle)
+		movePiece({ File::d, move.from.rank }, QueensRookSq(side));
+	if (move.special == Special::kingsideCastle)
+		movePiece({ File::f, move.from.rank }, KingsRookSq(side));
 
 	castlingRights = undo.castlingRights;
 
+	// Undo capture
 	if (move.takes)
 	{
-		auto captureSq{ (move.special == Special::en_passant) ? *undo.en_passant : move.to };
+		Square captureSq;
+		if (move.special == Special::enPassant)
+			captureSq = *undo.enPassant;
+		else
+			captureSq = move.to;
 		set(undo.captured, captureSq);
 	}
 }
 
-void Position::reset()
+void Position::handleCapture(const Move& move, Undo& undo)
 {
-	for (auto& square : m_board)
-		square = Piece::empty;
+	if (!move.takes)
+		return;
+
+	Square captureSq;
+	if (move.special == Special::enPassant)
+		captureSq = *getEnPassant();
+	else
+		captureSq = move.to;
+
+	undo.captured = get(captureSq);
+	set(Piece::empty, captureSq);
 }
 
-void Position::setPair(Piece piece, File file, Rank rank)
+
+void Position::handlePromotion(const Move& move)
 {
-	set(piece, { file, rank });
-	set(piece, { File::h - file, rank });
+	if (move.special != Special::promotion)
+		return;
+
+	set(move.promoteTo, move.to);
 }
 
-void Position::setup()
+
+void Position::handleEnPassant(const Move& move)
 {
-	for (Side side : { Side::white, Side::black })
+	if (move.special == Special::doubleStep)
+		m_enPassant = move.to;
+	else
+		m_enPassant.reset(); // en passant only lasts one turn
+}
+
+Square Position::getKingSq(Side side) const
+{
+	return (side == Side::white) ? m_whiteKingSq : m_blackKingSq;
+}
+
+void Position::setKingSq(Side side, Square sq)
+{
+	if (side == Side::white)
+		m_whiteKingSq = sq;
+	else
+		m_blackKingSq = sq;
+}
+
+void Position::handleCastling(const Move& move)
+{
+	const auto piece{ get(move.from) };
+	const auto side { getSide() };
+	const auto enemySide{ !side };
+
+	// Move rooks if castling
+	if (move.special == Special::queensideCastle)
+		movePiece(QueensRookSq(side), { File::d, move.from.rank });
+	if (move.special == Special::kingsideCastle)
+		movePiece(KingsRookSq(side), { File::f, move.from.rank });
+
+	// King move
+	if (isType(piece, PieceType::king))
+		removeCastleRights(side);
+
+	// Rook move
+	if (isType(piece, PieceType::rook))
 	{
-		Rank majorRank{ getMajorRank(side) };
-		Rank pawnRank{ getPawnRank(side) };
-
-		setPair(toPiece(PieceType::rook  , side), File::a, majorRank);
-		setPair(toPiece(PieceType::knight, side), File::b, majorRank);
-		setPair(toPiece(PieceType::bishop, side), File::c, majorRank);
-
-		set(toPiece(PieceType::queen, side), { File::d, majorRank });
-		set(toPiece(PieceType::king , side), { File::e, majorRank });
-
-		auto pawn{ toPiece(PieceType::pawn, side) };
-		for (int file{ File::a }; file < File::max_files; ++file)
-			set(pawn, { file, pawnRank });
+		if (move.from == QueensRookSq(side))
+			removeCastleRights(side, CastleSide::queenside);
+		else if (move.from == KingsRookSq(side))
+			removeCastleRights(side, CastleSide::kingside);
 	}
 
-	m_en_passant = std::nullopt;
-	sideToMove = Side::white;
-	setCastleRights(Side::white, true);
-	setCastleRights(Side::black, true);
-
-}
-
-void Position::printBoard()
-{
-	int rowNumber{ Rank::max_ranks };
-
-	for (std::size_t rank{ Rank::r8 }; rank < Rank::max_ranks; ++rank)
+	// Rook capture
+	if (auto capture{ get(move.to) }; isType(capture, PieceType::rook))
 	{
-		for (std::size_t file{ File::a }; file < File::max_files; ++file)
-		{
-			auto piece = m_board[Rank::max_ranks * rank + file];
-			char symbol = getInfo(piece).symbol;
-			std::cout << symbol << ' ';
-		}
-		std::cout << '|' << rowNumber-- << '\n';
+		if (move.to == QueensRookSq(enemySide))
+			removeCastleRights(enemySide, CastleSide::queenside);
+		else if (move.to == KingsRookSq(enemySide))
+			removeCastleRights(enemySide, CastleSide::kingside);
 	}
-
-	for (int file{ File::a }; file < File::max_files; ++file)
-		std::cout << "--";
-	std::cout << '\n';
-
-	for (auto file : files)
-		std::cout << file << ' ';
-	std::cout << '\n' << '\n';
 }
 
-// W: white, B: black; castles= K:kingside, Q:queenside
-constexpr std::uint8_t WK { 0b0000'0001 };
-constexpr std::uint8_t WQ { 0b0000'0010 };
-constexpr std::uint8_t BK { 0b0000'0100 };
-constexpr std::uint8_t BQ { 0b0000'1000 };
+constexpr std::uint8_t white_kingside  { 0b0000'0001 };
+constexpr std::uint8_t white_queenside { 0b0000'0010 };
+constexpr std::uint8_t black_kingside  { 0b0000'0100 };
+constexpr std::uint8_t black_queenside { 0b0000'1000 };
 
 constexpr std::uint8_t castleMask(Side side)
 {
-	return (side == Side::white ? (WK | WQ) : (BK | BQ));
+	return (side == Side::white 
+		? (white_kingside | white_queenside) 
+		: (black_kingside | white_queenside));
 }
 
 constexpr std::uint8_t castleMask(Side side, CastleSide castleSide)
@@ -193,9 +162,9 @@ constexpr std::uint8_t castleMask(Side side, CastleSide castleSide)
 	switch (castleSide)
 	{
 	case CastleSide::kingside:
-		return (side == Side::white ? WK : BK);
+		return (side == Side::white ? white_kingside : black_kingside);
 	case CastleSide::queenside:
-		return (side == Side::white ? WQ : BQ);
+		return (side == Side::white ? white_queenside : black_queenside);
 	default:
 		assert(false);
 		return 0;
@@ -207,18 +176,21 @@ bool Position::getCastleRights(Side side, CastleSide castleSide) const
 	return castlingRights & castleMask(side, castleSide);
 }
 
-void Position::setCastleRights(Side side, CastleSide castleSide, bool enabled)
+void Position::removeCastleRights(Side side, CastleSide castleSide)
 {
-	if (enabled)
-		castlingRights |= castleMask(side, castleSide);
-	else
-		castlingRights &= ~castleMask(side, castleSide);
+	castlingRights &= ~castleMask(side, castleSide);
+}
+void Position::setCastleRights(Side side, CastleSide castleSide)
+{
+	castlingRights |= castleMask(side, castleSide);
 }
 
-void Position::setCastleRights(Side side, bool enabled)
+void Position::removeCastleRights(Side side)
 {
-	if (enabled)
-		castlingRights |= castleMask(side);
-	else
-		castlingRights &= ~castleMask(side);
+	castlingRights &= ~castleMask(side);
+}
+
+void Position::setCastleRights(Side side)
+{
+	castlingRights |= castleMask(side);
 }
