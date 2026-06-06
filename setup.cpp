@@ -28,6 +28,7 @@ void Position::setup()
 
 		set(toPiece(PieceType::queen, side), { File::d, majorRank });
 		set(toPiece(PieceType::king,  side), { File::e, majorRank });
+		setKingSq(side, { File::e, majorRank });
 
 		auto pawn{ toPiece(PieceType::pawn, side) };
 		for (int file{ File::a }; file < File::max_files; ++file)
