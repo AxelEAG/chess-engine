@@ -6,28 +6,45 @@
 
 void Position::movePiece(Square from, Square to)
 {
-	auto piece{ get(from) };
-	if (isType(piece, PieceType::king))
-		setKingSq(getSide(), to);
-
-	set(piece, to);
+	set(get(from), to);
 	set(Piece::empty, from);
 }
 
 Undo Position::doMove(const Move& move)
 {
 	Undo undo{
-		.castlingRights	= castlingRights,
-		.enPassant = getEnPassant(),
+		.castlingRights = m_castlingRights,
+		.enPassant	 = m_enPassant,
+		.blackKingSq = m_blackKingSq,
+		.whiteKingSq = m_whiteKingSq
 	};
 	
-	handleCapture(move, undo);
-	movePiece(move.from, move.to);
-	handleCastling(move);
-	handlePromotion(move);
+	m_enPassant.reset(); // en passant only lasts one turn
+	const auto side{ getSide() };
 
+	if (move == capture)
+	{
+		undo.captured = get(move.to);
+		set(Piece::empty, move.to);
+	}
+	else if (move == enPassant)
+	{
+		undo.captured = get(*undo.enPassant);
+		set(Piece::empty, *undo.enPassant);
+	}
+	else if (move == doublePush)
+		m_enPassant = move.to;
+	else if (move == queenCastle)
+		movePiece(QueensRookSq(side), QueensRookCastleSq(side));
+	else if (move == kingCastle)
+		movePiece(KingsRookSq(side), KingsRookCastleSq(side));
+	else if (isPromotion(move))
+		set(promotionPiece(move, side), move.to);
+	
+	movePiece(move.from, move.to);
+
+	updateCastleRights(move);
 	updateSide();
-	handleEnPassant(move);
 
 	return undo;
 }
@@ -35,66 +52,29 @@ Undo Position::doMove(const Move& move)
 void Position::undoMove(const Move& move, const Undo& undo)
 {
 	updateSide();
-	const auto side{ getSide() };
 	movePiece(move.to, move.from);
+	const auto side{ getSide() };
 
-	// Undo Promotion
-	if (move.special == Special::promotion)
-		set(toPiece(PieceType::pawn, side), move.from);
-
-	m_enPassant = undo.enPassant;
-
-	// Undo Castling
-	if (move.special == Special::queensideCastle)
-		movePiece({ File::d, move.from.rank }, QueensRookSq(side));
-	if (move.special == Special::kingsideCastle)
-		movePiece({ File::f, move.from.rank }, KingsRookSq(side));
-
-	castlingRights = undo.castlingRights;
-
-	// Undo capture
-	if (move.takes)
+	if	(move == capture)
+		set(undo.captured, move.to);
+	else if (move == enPassant)
+		set(undo.captured, *undo.enPassant);
+	else if (move == doublePush)
+		m_enPassant = undo.enPassant;
+	else if (move == queenCastle)
+		movePiece(QueensRookCastleSq(side), QueensRookSq(side));
+	else if (move == kingCastle)
+		movePiece(KingsRookCastleSq(side), KingsRookSq(side));
+	else if (isPromotion(move))
 	{
-		Square captureSq;
-		if (move.special == Special::enPassant)
-			captureSq = *undo.enPassant;
-		else
-			captureSq = move.to;
-		set(undo.captured, captureSq);
+		set(toPiece(PieceType::pawn, side), move.from);
+		if (isCapturePromotion(move)) set(undo.captured, move.to);
 	}
-}
 
-void Position::handleCapture(const Move& move, Undo& undo)
-{
-	if (!move.takes)
-		return;
-
-	Square captureSq;
-	if (move.special == Special::enPassant)
-		captureSq = *getEnPassant();
-	else
-		captureSq = move.to;
-
-	undo.captured = get(captureSq);
-	set(Piece::empty, captureSq);
-}
-
-
-void Position::handlePromotion(const Move& move)
-{
-	if (move.special != Special::promotion)
-		return;
-
-	set(move.promoteTo, move.to);
-}
-
-
-void Position::handleEnPassant(const Move& move)
-{
-	if (move.special == Special::doubleStep)
-		m_enPassant = move.to;
-	else
-		m_enPassant.reset(); // en passant only lasts one turn
+	m_castlingRights = undo.castlingRights;
+	m_enPassant   = undo.enPassant;
+	m_blackKingSq = undo.blackKingSq;
+	m_whiteKingSq = undo.whiteKingSq;
 }
 
 Square Position::getKingSq(Side side) const
@@ -110,33 +90,23 @@ void Position::setKingSq(Side side, Square sq)
 		m_blackKingSq = sq;
 }
 
-void Position::handleCastling(const Move& move)
+// Remove rights based on king / rook move
+void Position::updateCastleRights(const Move& move)
 {
 	const auto piece{ get(move.from) };
 	const auto side { getSide() };
 	const auto enemySide{ !side };
-
-	// Move rooks if castling
-	if (move.special == Special::queensideCastle)
-		movePiece(QueensRookSq(side), { File::d, move.from.rank });
-	if (move.special == Special::kingsideCastle)
-		movePiece(KingsRookSq(side), { File::f, move.from.rank });
-
-	// King move
-	if (isType(piece, PieceType::king))
+	
+	if (typeOf(piece) == PieceType::king)
 		removeCastleRights(side);
-
-	// Rook move
-	if (isType(piece, PieceType::rook))
+	else if (typeOf(piece) == PieceType::rook)
 	{
 		if (move.from == QueensRookSq(side))
 			removeCastleRights(side, CastleSide::queenside);
 		else if (move.from == KingsRookSq(side))
 			removeCastleRights(side, CastleSide::kingside);
 	}
-
-	// Rook capture
-	if (auto capture{ get(move.to) }; isType(capture, PieceType::rook))
+	else if (auto capture{ get(move.to) }; typeOf(capture) == PieceType::rook)
 	{
 		if (move.to == QueensRookSq(enemySide))
 			removeCastleRights(enemySide, CastleSide::queenside);
@@ -173,24 +143,24 @@ constexpr std::uint8_t castleMask(Side side, CastleSide castleSide)
 
 bool Position::getCastleRights(Side side, CastleSide castleSide) const
 {
-	return castlingRights & castleMask(side, castleSide);
+	return m_castlingRights & castleMask(side, castleSide);
 }
 
 void Position::removeCastleRights(Side side, CastleSide castleSide)
 {
-	castlingRights &= ~castleMask(side, castleSide);
+	m_castlingRights &= ~castleMask(side, castleSide);
 }
 void Position::setCastleRights(Side side, CastleSide castleSide)
 {
-	castlingRights |= castleMask(side, castleSide);
+	m_castlingRights |= castleMask(side, castleSide);
 }
 
 void Position::removeCastleRights(Side side)
 {
-	castlingRights &= ~castleMask(side);
+	m_castlingRights &= ~castleMask(side);
 }
 
 void Position::setCastleRights(Side side)
 {
-	castlingRights |= castleMask(side);
+	m_castlingRights |= castleMask(side);
 }

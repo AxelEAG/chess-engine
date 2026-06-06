@@ -30,7 +30,7 @@ public:
 
 private:
 	std::array<Piece, 64> m_board;
-	std::uint8_t castlingRights;
+	std::uint8_t m_castlingRights;
 	std::optional<Square>  m_enPassant{};
 	Square m_whiteKingSq;
 	Square m_blackKingSq;
@@ -44,17 +44,14 @@ private:
 	void updateSide() { m_sideToMove = !getSide(); }
 	void setKingSq(Side side, Square sq);
 
-	void handleCapture(const Move& move, Undo& undo);
-	void handlePromotion(const Move& move);
-	void handleEnPassant(const Move& move);
-	void handleCastling(const Move& move);
+	void updateCastleRights(const Move& move);
 	void setCastleRights(Side side, CastleSide castleSid);
 	void setCastleRights(Side side);
 	void removeCastleRights(Side side, CastleSide castleSide);
 	void removeCastleRights(Side side);
 };
 
-inline std::size_t getIndex(Square sq) {
+constexpr std::size_t getIndex(Square sq) {
 	return (Rank::max_ranks * sq.rank + sq.file);
 }
 
