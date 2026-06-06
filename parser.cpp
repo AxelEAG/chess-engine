@@ -116,19 +116,23 @@ bool Parser::parsePromotion(ParsedMove& move)
     if (!promoteTo)
         return false;
 
-    move.special = Special::promotion;
-    move.promoteTo = *promoteTo;
+    if (move == capture)
+        move.flags = toCapturePromoteFlag(*promoteTo);
+    else
+        move.flags = toPromoteFlag(*promoteTo);
+
     return true;
 }
 
 void Parser::parseCheck(ParsedMove& move)
 {
     if (consume('+'))
-        move.isCheck = Check::check;
+        move.check = true;
     else if (consume('#'))
-        move.isCheck = Check::checkmate;
-    else
-        move.isCheck = Check::none;
+    {
+        move.check = true;
+        move.checkmate = true;
+    }
 }
 
 std::optional<ParsedMove> Parser::parseCastle()
@@ -149,12 +153,11 @@ std::optional<ParsedMove> Parser::parseCastle()
     {
         if (!consume('O'))
             return std::nullopt;
-
-        move.special = Special::queensideCastle;
+        move.flags = kingCastle;
     }
     // Kingside castle
     else
-        move.special = Special::kingsideCastle;
+        move.flags = queenCastle;
 
     parseCheck(move);
 
@@ -174,7 +177,7 @@ std::optional<ParsedMove> Parser::parsePieceMove()
     const auto optFile{ parseFile() };
     const auto optRank{ parseRank() };
 
-    move.takes = consume('x'); // Optional capture
+    if (consume('x')) move.flags = capture;
 
     const auto toSquare{ parseSquare() };
     if (toSquare)
@@ -185,7 +188,7 @@ std::optional<ParsedMove> Parser::parsePieceMove()
         move.to = *toSquare;
     }
     // Given info was full move, not disambiguation
-    else if (optFile && optRank && !move.takes) 
+    else if (optFile && optRank && !(move == capture)) 
         move.to = Square{ *optFile, *optRank };
     else
         return std::nullopt;
@@ -215,7 +218,7 @@ std::optional<ParsedMove> Parser::parsePawnMove()
 
         move.fromFile = *file;
         move.to = *to;
-        move.takes = true;
+        move.flags = capture;
     }
     // Check simple move
     else if (auto rank{ parseRank() })
