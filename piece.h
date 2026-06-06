@@ -135,7 +135,7 @@ constexpr bool isEmpty(Piece piece)
 
 constexpr Side sideOf(Piece piece)
 {
-    assert(!isEmpty(piece));
+    assert(!isEmpty(piece) && "sideOf: should not be called on empty piece");
     if (piece >= Piece::white_pawn && piece <= Piece::white_king)
         return Side::white;
     else
@@ -192,7 +192,8 @@ constexpr Piece toPiece(PieceType type, Side side)
     case PieceType::king:
         return (side == Side::white) ? Piece::white_king   : Piece::black_king;
     default:
-        return Piece::empty;
+        assert(0 && "toPiece: should not be called on empty piece");
+        return;
     }
 }
 
@@ -228,18 +229,22 @@ constexpr Rank PawnRank(Side side)
 
 constexpr Square QueensRookSq(Side side)
 {
-    if (side == Side::white)
-        return Square{ File::a, r1 };
-    else
-        return Square{ File::a, r8 };
+    return { File::a, MajorRank(side) };
+}
+
+constexpr Square QueensRookCastleSq(Side side)
+{
+    return { File::d, MajorRank(side) };
 }
 
 constexpr Square KingsRookSq(Side side)
 {
-    if (side == Side::white)
-        return Square{ File::h, r1 };
-    else
-        return Square{ File::h, r8 };
+    return { File::h, MajorRank(side) };
+}
+
+constexpr Square KingsRookCastleSq(Side side)
+{
+    return { File::f, MajorRank(side) };
 }
 
 #endif
