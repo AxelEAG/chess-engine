@@ -132,6 +132,8 @@
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="parser_test.cpp" />
     <ClCompile Include="attacking.cpp" />
+    <ClCompile Include="setup.cpp" />
+    <ClCompile Include="tester.cpp" />
     <ClCompile Include="validator.cpp" />
     <ClCompile Include="validator.h" />
   </ItemGroup>
@@ -140,6 +142,7 @@
     <ClInclude Include="parser.h" />
     <ClInclude Include="piece.h" />
     <ClInclude Include="position.h" />
+    <ClInclude Include="setup.h" />
     <ClInclude Include="square.h" />
     <ClInclude Include="attacking.h" />
   </ItemGroup>

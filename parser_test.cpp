@@ -322,7 +322,7 @@ void testMoves(std::string_view test_name, auto moves, bool isPass)
 
 }
 
-void Parsertester()
+void parserTester()
 {
     testMoves("Valid Pawn Moves Test"    , validPawnMoves    , true);
     testMoves("Invalid Pawn Moves Test"  , invalidPawnMoves  , false);

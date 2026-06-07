@@ -248,4 +248,21 @@ inline Square KingsRookCastleSq(Side side)
     return Square { File::f, MajorRank(side) };
 }
 
+inline Square KingSq(Side side)
+{
+    return Square{ File::e, MajorRank(side) };
+}
+
+
+inline Square ProtectedSq(Side side, bool isKingside)
+{
+    return Square{ isKingside ? File::f : File::d, MajorRank(side) };
+}
+
+
+inline Square KingCastleSq(Side side, bool isKingside)
+{
+    return Square{ isKingside ? File::g : File::c, MajorRank(side) };
+}
+
 #endif

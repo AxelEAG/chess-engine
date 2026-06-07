@@ -3,12 +3,21 @@
 #include <utility>
 #include <vector>
 
+// Helper function to get direction between two squares (assumes straight line)
+Dir getDir(Square from, Square to)
+{
+	Dir diff{ to.file - from.file, to.rank - from.rank };
+	int magnitude{ std::max(std::abs(diff.x), std::abs(diff.y)) };
+	return { diff.x / magnitude, diff.y / magnitude };
+}
+
 bool isValid(Square sq)
 {
 	return (sq.file >= File::a && sq.file < File::max_files &&
 			sq.rank >= Rank::r8 && sq.rank < Rank::max_ranks);
 }
 
+// Returns blocking square given a direction of movement
 std::optional<Square> raycast(const Position& pos, Square from, Dir dir)
 {
 	Square next{ from + dir };
@@ -23,6 +32,7 @@ std::optional<Square> raycast(const Position& pos, Square from, Dir dir)
 	return std::nullopt;
 }
 
+// Returns square to move / jump to if it's valid
 std::optional<Square> jump(const Position& pos, Square from, Dir dir)
 {
 	Square next{ from + dir };
@@ -33,55 +43,56 @@ std::optional<Square> jump(const Position& pos, Square from, Dir dir)
 	return next;
 }
 
-std::optional<Square> pawnPush(const Position& pos, Square to, Side side)
+std::optional<Square> canPawnPush(const Position& pos, Square to, Side side)
 {
-	Dir revDir{ 0, -pawnDir(side) };
-	Square push{ to + revDir};
+	const Dir revDir{ 0, -pawnDir(side) };
+	const Square pushFrom{ to + revDir};
 
-	auto pawn{ pos.get(push) };
-	if (pawn == toPiece(PieceType::pawn, side))
-		return push;
+	const auto piece{ pos.get(pushFrom) };
+	if (piece == toPiece(PieceType::pawn, side))
+		return pushFrom;
 	
 	return std::nullopt;
 }
 
-std::optional<Square> pawnDoublePush(const Position& pos, Square to, Side side)
+std::optional<Square> canPawnDoublePush(const Position& pos, Square to, Side side)
 {
-	Dir revDir{ 0, -pawnDir(side)};
-	Square push{ to + revDir };
-	if (!pos.isEmpty(push))
+	const Dir revDir{ 0, -pawnDir(side)};
+	const Square pushFrom{ to + revDir };
+	if (!pos.isEmpty(pushFrom))
 		return std::nullopt;
 
-	Square doublePush{ push + revDir };
-	if (doublePush.rank != getPawnRank(side))
+	const Square doublePushFrom{ pushFrom + revDir };
+	if (doublePushFrom.rank != PawnRank(side))
 		return std::nullopt;
 
-	auto pawn{ pos.get(doublePush) };
-	if (pawn == toPiece(PieceType::pawn, side))
-		return doublePush;
+	const auto piece{ pos.get(doublePushFrom) };
+	if (piece == toPiece(PieceType::pawn, side))
+		return doublePushFrom;
 
 	return std::nullopt;
 }
 
-bool pawnEnPassant(const Position& pos, Square to, Side side)
+bool canPawnEnPassant(const Position& pos, Square to, Side side)
 {
-	auto en_passant{ pos.getEnPassant() };
-	if (!en_passant)
+	const auto enPassantSq{ pos.getEnPassant() };
+	if (!enPassantSq)
 		return false;
 
-	Dir revDir{ 0, -pawnDir(side) };
-	Square enemySq{ to + revDir };
-	auto enemy{ pos.get(enemySq) };
-	if (isEmpty(enemy) || sideOf(enemy) == side)
+	const Dir revDir{ 0, -pawnDir(side) };
+	const Square enemySq{ to + revDir };
+	if (enemySq != *enPassantSq)
 		return false;
 
-	if (enemySq == *en_passant)
-		return true;
-	return false;
+	const auto piece{ pos.get(enemySq) };
+	if (isEmpty(piece) || piece != toPiece(PieceType::pawn, !side))
+		return false;
+
+	return true;
 }
 
 
-// Checks if diff pieces can attack the square
+// Returns true if any piece can attack a given square
 bool isAttacked(const Position& pos, Square sq, Side enemySide)
 {
 	for (auto type : {	PieceType::bishop, PieceType::rook, PieceType::queen,
@@ -98,37 +109,30 @@ bool isAttacked(const Position& pos, Square sq, Side enemySide)
 	return false;
 }
 
-void getBlockers(const Position& pos, std::vector<Square>& blockers, Square to, Side blockerSide)
+// Stores all pieces that can get to a given empty square
+void getBlockers(const Position& pos, std::vector<Square>& blockers, Square sq, Side blockerSide)
 {
 	for (auto type : { PieceType::bishop, PieceType::rook, PieceType::queen,
 						PieceType::knight, PieceType::king })
 	{
 		auto blocker{ toPiece(type, blockerSide) };
-		visitAttackers(pos, to, blocker, [&](Square sq) { blockers.push_back(sq); return true; });
+		visitAttackers(pos, sq, blocker, [&](Square sq) { blockers.push_back(sq); return true; });
 	}
-
-	if (pawnEnPassant(pos, to, blockerSide))
-	{
-		int reverse{ -pawnDir(blockerSide) };
-		Square left{ to + Dir {-1, reverse} };
-		Square right{ to + Dir {1, reverse} };
-		auto pawn{ toPiece(PieceType::pawn, blockerSide) };
-		if (pos.get(left) == pawn) blockers.push_back(left);
-		if (pos.get(right) == pawn) blockers.push_back(right);
-	}
-	else if (auto push{ pawnPush(pos, to, blockerSide) })
+	// Attack and movement is the same for everything but pawns, check their different movement
+	if (auto push{ canPawnPush(pos, sq, blockerSide) })
 		blockers.push_back(*push);
-	else if (auto doublePush{ pawnDoublePush(pos, to, blockerSide) })
+	else if (auto doublePush{ canPawnDoublePush(pos, sq, blockerSide) })
 		blockers.push_back(*doublePush);
 }
 
-void getAttackers(const Position& pos, std::vector<Square>& attackers, Square to, Side attackerSide)
+// Stores all pieces that can attack a given occupied square
+void getAttackers(const Position& pos, std::vector<Square>& attackers, Square sq, Side attackerSide)
 {
 	for (auto type : {	PieceType::bishop, PieceType::rook, PieceType::queen,
 						PieceType::knight, PieceType::king, PieceType::pawn })
 	{
 		auto attacker{ toPiece(type, attackerSide) };
-		visitAttackers(pos, to, attacker, [&](Square sq) { attackers.push_back(sq); return true; });
+		visitAttackers(pos, sq, attacker, [&](Square sq) { attackers.push_back(sq); return true; });
 	}
 }
 
@@ -137,41 +141,28 @@ bool isCheck(const Position& pos, Side side)
 	return isAttacked(pos, pos.getKingSq(side), !side);
 }
 
+// Temporarily tries a move, returns true if it results in a valid position (doesn't lead the current mover in check) 
 bool canMoveTo(Position& pos, Square from, Square to)
 {
-	Move move{
-		.piece = pos.get(from),
-		.from = from,
-		.to = to,
+	const auto piece{ pos.get(from) };
+	const Move move{
+		.from  = from,
+		.to	   = to,
+		.flags = pos.isEmpty(to) ? none : capture
 	};
-	
-	if (!pos.isEmpty(to))
-		move.takes = true;
-	else if (isType(move.piece, PieceType::pawn))
-	{
-		move.special = Special::en_passant;
-		move.takes	 = true;
-	}
 
-	auto side{ sideOf(move.piece) };
-	auto undo{ pos.doMove(move) };
-	bool canMove{ !isCheck(pos, side) };
+	const auto side{ sideOf(piece) };
+	const auto undo{ pos.doMove(move) };
+	const bool canMove{ !isCheck(pos, side) };
 	pos.undoMove(move, undo);
 
 	return canMove;
 }
 
-Dir getDir(Square from, Square to)
-{
-	Dir diff{ to.file - from.file, to.rank - from.rank };
-	int magnitude{ std::max(std::abs(diff.x), std::abs(diff.y)) };
-	return { diff.x / magnitude, diff.y / magnitude };
-}
-
 bool isCheckmate(Position& pos, Side side)
 {
-	auto kingSq{ pos.getKingSq(side) };
-	auto enemySide{ !side };
+	const auto kingSq{ pos.getKingSq(side) };
+	const auto enemySide{ !side };
 
 	std::vector<Square> attackers{};
 	getAttackers(pos, attackers, kingSq, enemySide);
@@ -181,21 +172,20 @@ bool isCheckmate(Position& pos, Side side)
 		return false;
 
 	// Check if king can move out of check
-	auto king{ toPiece(PieceType::king, side) };
-	for (auto dir : getInfo(king).dirs)
+	for (auto dir : getInfo(PieceType::king).dirs)
 	{
-		Square sq{ kingSq + dir };
+		const Square next { kingSq + dir };
 
-		if (!isValid(sq))
+		if (!isValid(next))
 			continue;
 
-		auto piece{ pos.get(sq) };
+		auto piece{ pos.get(next) };
 
 		// Blocked by ally
-		if (!pos.isEmpty(sq) && sideOf(piece) == side)
+		if (!pos.isEmpty(next) && sideOf(piece) == side)
 			continue;
 
-		if (canMoveTo(pos, kingSq, sq))
+		if (canMoveTo(pos, kingSq, next))
 			return false;
 	}
 
@@ -203,9 +193,7 @@ bool isCheckmate(Position& pos, Side side)
 	if (attackers.size() != 1)
 		return true;
 
-
-	auto attackerSq{ attackers[0] };
-	auto dir{ getDir(kingSq, attackerSq)};
+	const auto attackerSq{ attackers[0] };
 
 	// Check if can be taken
 	std::vector<Square> defenders{};
@@ -216,14 +204,15 @@ bool isCheckmate(Position& pos, Side side)
 			return false;
 	}
 	
-	// Check if can be bocker
+	// Check if can be blocker
 	auto attacker{ pos.get(attackerSq) };
 
 	// Only slideables can be blocked
 	if (!getInfo(attacker).canSlide)
 		return true;
 
-	Square pathSq{ kingSq + dir };
+	const auto dir{ getDir(kingSq, attackerSq) };
+	const Square pathSq{ kingSq + dir };
 	for (auto pathSq{ kingSq + dir }; pathSq != attackerSq; pathSq += dir)
 	{
 		std::vector<Square> blockers{};
@@ -234,8 +223,6 @@ bool isCheckmate(Position& pos, Side side)
 			if (canMoveTo(pos, blockerSq, pathSq))
 				return false;
 		}
-
-
 	}
 
 	return false;

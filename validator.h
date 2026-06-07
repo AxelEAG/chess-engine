@@ -22,4 +22,26 @@ private:
 
 };
 
+class ScopedMove
+{
+public:
+	ScopedMove(Position& pos, const Move& move) : m_pos{ pos }, m_move{ move }
+	{
+		m_undo = m_pos.doMove(move);
+	}
+
+	~ScopedMove()
+	{
+		m_pos.undoMove(m_move, m_undo);
+	}
+	ScopedMove(const ScopedMove&) = delete;
+	ScopedMove& operator=(const ScopedMove&) = delete;
+	ScopedMove(ScopedMove&&) = delete;
+
+private:
+	Position& m_pos;
+	Move m_move;
+	Undo m_undo;
+};
+
 #endif
