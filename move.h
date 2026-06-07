@@ -7,23 +7,23 @@
 enum MoveFlags
 {
 	none,
-	
+
 	capture,
 
-	enPassant ,
+	enPassant,
 	doublePush,
-	
-	kingCastle ,
+
+	kingCastle,
 	queenCastle,
-	
+
 	promoteKnight,
 	promoteBishop,
-	promoteRook  ,
-	promoteQueen ,
+	promoteRook,
+	promoteQueen,
 
 	capturePromoteKnight,
 	capturePromoteBishop,
-	capturePromoteRook  ,
+	capturePromoteRook,
 	capturePromoteQueen
 };
 
@@ -163,4 +163,48 @@ constexpr Piece promotionPiece(const Move& move, Side side)
 {
 	return toPiece(promotionPieceType(move), side);
 }
+
+
+constexpr std::string_view toString(MoveFlags flags)
+{
+	switch (flags)
+	{
+	case none:                  return "Simple move";
+
+	case capture:               return "Capture";
+
+	case enPassant:             return "En passant";
+	case doublePush:            return "Double push";
+
+	case kingCastle:            return "Kingside castle";
+	case queenCastle:           return "Queenside castle";
+
+	case promoteKnight:         return "Knight promotion";
+	case promoteBishop:         return "Bishop promotion";
+	case promoteRook:           return "Rook promotion";
+	case promoteQueen:          return "Queen promotion";
+
+	case capturePromoteKnight:  return "Capture + knight promotion";
+	case capturePromoteBishop:  return "Capture + bishop promotion";
+	case capturePromoteRook:    return "Capture + rook promotion";
+	case capturePromoteQueen:   return "Capture + queen promotion";
+	}
+
+	return "INVALID FLAG";
+}
+
+inline std::ostream& operator<<(std::ostream& out, const MoveFlags flags)
+{
+	return out << toString(flags);
+}
+
+inline std::ostream& operator<<(std::ostream& out, const Move& move)
+{
+	out << "Move - "
+		<< "From: " << move.from << ' '
+		<< "To: " << move.to << ' '
+		<< "Flags: " << move.flags;
+	return out;
+}
+
 #endif

@@ -81,5 +81,5 @@ void printBoard(const Position& pos)
 
 	for (auto file : files)
 		std::cout << file << ' ';
-	std::cout << '\n' << '\n';
+	std::cout << '\n';
 }

@@ -14,13 +14,11 @@
 class Parser
 {
 public:
-    Parser(std::string_view s): m_input(s)
-    {
-    }
+    Parser(std::string_view s): m_input(s) {}
 
     bool eof()  const;
     std::optional<ParsedMove> parseMove();
-    std::optional<Placement>  parsePlacement();
+    friend class Tester;
 
 private:
     std::string_view m_input;
@@ -42,6 +40,9 @@ private:
     std::optional<PieceType>  parsePromotionPiece();
     bool parsePromotion(ParsedMove& move);
     void parseCheck(ParsedMove& move);
+
+    std::optional<Placement>  parsePlacement();
+
 };
 
 #endif

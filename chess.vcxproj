@@ -145,6 +145,7 @@
     <ClInclude Include="setup.h" />
     <ClInclude Include="square.h" />
     <ClInclude Include="attacking.h" />
+    <ClInclude Include="tester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

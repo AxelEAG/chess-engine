@@ -1,6 +1,6 @@
 #include "position.h"
-#include "parser.h"
 #include "validator.h"
+#include "tester.h"
 
 #include <iostream>
 #include <string>
@@ -22,7 +22,6 @@
 
 void printBoard(const Position& pos);
 void parserTester();
-void validatorTester();
 std::optional<ParsedMove> parseMove(std::string_view text);
 
 int main()
@@ -58,5 +57,8 @@ int main()
 	//}
 	
 	// parserTester();
-	validatorTester();
+	Tester t{ true };
+	t.TestCastlingValidation();
+
+
 }

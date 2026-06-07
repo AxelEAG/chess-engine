@@ -31,6 +31,7 @@ public:
 
 	void setup();
 	friend void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo);
+	friend class Tester;
 
 private:
 	std::array<Piece, 64> m_board;

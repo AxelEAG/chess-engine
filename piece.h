@@ -3,6 +3,7 @@
 
 #include "square.h"
 
+#include <iostream>
 #include <array>
 #include <cassert>
 #include <span>
@@ -46,9 +47,14 @@ enum class Side
     black
 };
 
-inline constexpr Side operator!(Side side)
+constexpr Side operator!(Side side)
 {
     return (side == Side::white) ? Side::black : Side::white;
+}
+
+inline std::ostream& operator<<(std::ostream& out, Side side)
+{
+    return out << ((side == Side::white) ? "White" : "Black");
 }
 
 struct PieceInfo
@@ -213,54 +219,54 @@ constexpr const PieceInfo& getInfo(Piece piece)
     return pieceInfo[static_cast<std::size_t>(piece)];
 }
 
-inline Rank MajorRank(Side side)
+constexpr Rank MajorRank(Side side)
 {
     return (side == Side::white ? Rank::r1 : Rank::r8);
 }
 
-inline Rank PromotionRank(Side side)
+constexpr Rank PromotionRank(Side side)
 {
     return (side == Side::white ? Rank::r8 : Rank::r1);
 }
 
-inline Rank PawnRank(Side side)
+constexpr Rank PawnRank(Side side)
 {
     return (side == Side::white ? Rank::r2 : Rank::r7);
 }
 
-inline Square QueensRookSq(Side side)
+constexpr Square QueensRookSq(Side side)
 {
     return Square { File::a, MajorRank(side) };
 }
 
-inline Square QueensRookCastleSq(Side side)
+constexpr Square QueensRookCastleSq(Side side)
 {
     return Square { File::d, MajorRank(side) };
 }
 
-inline Square KingsRookSq(Side side)
+constexpr Square KingsRookSq(Side side)
 {
     return Square { File::h, MajorRank(side) };
 }
 
-inline Square KingsRookCastleSq(Side side)
+constexpr Square KingsRookCastleSq(Side side)
 {
     return Square { File::f, MajorRank(side) };
 }
 
-inline Square KingSq(Side side)
+constexpr Square KingSq(Side side)
 {
     return Square{ File::e, MajorRank(side) };
 }
 
 
-inline Square ProtectedSq(Side side, bool isKingside)
+constexpr Square ProtectedSq(Side side, bool isKingside)
 {
     return Square{ isKingside ? File::f : File::d, MajorRank(side) };
 }
 
 
-inline Square KingCastleSq(Side side, bool isKingside)
+constexpr Square KingCastleSq(Side side, bool isKingside)
 {
     return Square{ isKingside ? File::g : File::c, MajorRank(side) };
 }

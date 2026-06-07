@@ -163,3 +163,16 @@ void Position::setCastleRights(Side side)
 {
 	m_castlingRights |= castleMask(side);
 }
+
+void printCastlingRights(uint8_t castlingRights)
+{
+	if (castlingRights == 0)
+		std::cout << " None";
+	else
+	{
+		if (castlingRights & white_kingside) std::cout << " WK";
+		if (castlingRights & white_queenside) std::cout << " WQ";
+		if (castlingRights & black_kingside)  std::cout << " BK";
+		if (castlingRights & black_queenside) std::cout << " BQ";
+	}
+}
