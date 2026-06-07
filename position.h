@@ -2,11 +2,14 @@
 #define POSITION_H
 
 #include "move.h"
+#include "setup.h"
 
 #include <array>
 #include <cstddef>
 #include <memory>
 #include <optional>
+
+struct Placement;
 
 std::size_t getIndex(Square sq);
 
@@ -27,6 +30,7 @@ public:
 	std::optional<Square>  getEnPassant() const { return m_enPassant; }
 
 	void setup();
+	friend void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo);
 
 private:
 	std::array<Piece, 64> m_board;

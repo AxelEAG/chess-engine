@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "move.h"
+#include "setup.h"
 
 #include <string_view>
 #include <optional>
@@ -19,6 +20,7 @@ public:
 
     bool eof()  const;
     std::optional<ParsedMove> parseMove();
+    std::optional<Placement>  parsePlacement();
 
 private:
     std::string_view m_input;
@@ -31,10 +33,11 @@ private:
     std::optional<ParsedMove> parsePieceMove();
     std::optional<ParsedMove> parsePawnMove();
 
+    std::optional<Square>     parseSquare();
     std::optional<File>       parseFile();
     std::optional<Rank>       parseRank();
-    std::optional<Square>     parseSquare();
-    std::optional<PieceType>  parsePiece();
+    std::optional<PieceType>  parsePieceType();
+    std::optional<Piece>      parsePiece();
 
     std::optional<PieceType>  parsePromotionPiece();
     bool parsePromotion(ParsedMove& move);

@@ -1,5 +1,6 @@
 #include "position.h"
 #include <iostream>
+#include <vector>
 
 void Position::resetBoard()
 {
@@ -40,6 +41,24 @@ void Position::setup()
 	setCastleRights(Side::white);
 	setCastleRights(Side::black);
 }
+
+void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo)
+{
+	pos.resetBoard();
+
+	for (const auto& placement : placements)
+		pos.set(placement.piece, placement.place);
+	
+	pos.set(Piece::white_king, posInfo.whiteKingSq);
+	pos.set(Piece::black_king, posInfo.blackKingSq);
+
+	pos.m_whiteKingSq	 = posInfo.whiteKingSq;
+	pos.m_blackKingSq	 = posInfo.blackKingSq;
+	pos.m_castlingRights = posInfo.castlingRights;
+	pos.m_enPassant		 = posInfo.enPassant;
+	pos.m_sideToMove	 = posInfo.sideToMove;
+}
+
 
 void printBoard(const Position& pos)
 {

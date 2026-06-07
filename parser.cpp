@@ -57,7 +57,7 @@ std::optional<Square> Parser::parseSquare()
     return Square{ *file, *rank };
 }
 
-std::optional<PieceType> Parser::parsePiece()
+std::optional<PieceType> Parser::parsePieceType()
 {
     switch (peek())
     {
@@ -166,7 +166,7 @@ std::optional<ParsedMove> Parser::parseCastle()
 
 std::optional<ParsedMove> Parser::parsePieceMove()
 {
-    auto piece{ parsePiece() };
+    auto piece{ parsePieceType() };
     if (!piece)
         return std::nullopt;
 
@@ -264,4 +264,65 @@ std::optional<ParsedMove> parseMove(std::string_view text)
         return std::nullopt;
 
     return move;
+}
+
+// Helper function for testing
+std::optional<Piece> Parser::parsePiece()
+{
+    Side side;
+    switch (peek())
+    {
+    case 'B': case 'b':
+        ++m_pos;
+        side = Side::black;
+        break;
+    case 'W': case 'w':
+        ++m_pos;
+        side = Side::white;
+        break;
+    default:
+        assert(0 && "parsePiece: wrong side input");
+        return std::nullopt;
+    }
+
+    switch (peek())
+    {
+    case 'K': case 'k':
+        ++m_pos;
+        return toPiece(PieceType::king, side);
+    case 'Q': case 'q':
+        ++m_pos;
+        return toPiece(PieceType::queen, side);
+    case 'R': case 'r':
+        ++m_pos;
+        return toPiece(PieceType::rook, side);
+    case 'B': case 'b':
+        ++m_pos;
+        return toPiece(PieceType::bishop, side);
+    case 'N': case 'n':
+        ++m_pos;
+        return toPiece(PieceType::knight, side);
+    case 'P': case 'p':
+        ++m_pos;
+        return toPiece(PieceType::pawn, side);
+    default:
+        assert(0 && "parsePiece: wrong piece input");
+        return std::nullopt;
+    }
+}
+
+std::optional<Placement> Parser::parsePlacement()
+{
+    const auto piece{ parsePiece() };
+    if (!piece)
+        return std::nullopt;
+
+    const auto square{ parseSquare() };
+    if (!square)
+    {
+        assert(0 && "parsePlacement: wrong square input");
+        return std::nullopt;
+    }
+
+    return Placement { *piece, *square };
 }
