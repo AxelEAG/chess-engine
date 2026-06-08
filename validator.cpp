@@ -106,30 +106,37 @@ std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
 	return std::nullopt;
 }
 
+
+bool Validator::isKingsPathBlocked(ParsedMove& move, Square from, bool isKingside)
+{
+	const Dir dir{ isKingside ? 1 : -1, 0 };
+	const File rookFile = isKingside ? File::h : File::a;
+
+	auto rookSq{ raycast(m_pos, from, dir) };
+	assert(rookSq && "Validator::generateCastleMove: Castle Rights violation, rook should be on its starting square");
+
+	if (rookSq->file != rookFile)
+		return false;
+
+	assert((m_pos.get(*rookSq) == toPiece(PieceType::rook, m_pos.getSide())) && "Validator::generateCastleMove: Castle Rights violation, rook should be on its starting square");
+	return true;
+}
+
 std::optional<Square> Validator::generateCastleMove(ParsedMove& move)
 {
-	const Side side{ m_pos.getSide() };
-	const Rank majorRank{ MajorRank(side) };
+	assert((move.piece == PieceType::king) && (move == kingCastle || move == queenCastle) && "Validator::generateCastleMove: Should only be called with a king move and a castling flag");
 
+	const Side side{ m_pos.getSide() };
 	const bool isKingside{ move == kingCastle };
 	const CastleSide castleSide = isKingside ? CastleSide::kingside : CastleSide::queenside;
-
-	const Square from { KingSq(side) };
-	if (auto piece{ m_pos.get(from) }; isEmpty(piece) || typeOf(piece) != PieceType::king)
-		return std::nullopt;
 
 	if (!m_pos.getCastleRights(side, castleSide))
 		return std::nullopt;
 
-	// Check there's no pieces in the way
-	const Dir dir{ isKingside ? 1 : -1, 0 };
-	const File rookFile = isKingside ? File::h : File::a;
-	auto rookSq{ raycast(m_pos, from, dir) };
-	if (!rookSq || rookSq->file != rookFile)
-		return std::nullopt;
+	const Square from { KingSq(side) };
+	assert((m_pos.get(from) == toPiece(PieceType::king, side)) && "Validator::generateCastleMove: Castle Rights violation, king should be on its starting square");
 
-	auto rook{ toPiece(PieceType::rook, m_pos.getSide()) };
-	if (auto piece{ m_pos.get(*rookSq) }; piece != rook)
+	if (!isKingsPathBlocked(move, from, isKingside))
 		return std::nullopt;
 
 	// Cannot castle if in check

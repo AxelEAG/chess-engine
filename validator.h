@@ -20,6 +20,7 @@ private:
 
 	bool validateCheck(ParsedMove& pmove);
 
+	bool isKingsPathBlocked(ParsedMove& move, Square from, bool isKingside);
 };
 
 class ScopedMove
