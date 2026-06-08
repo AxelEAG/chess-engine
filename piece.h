@@ -101,13 +101,13 @@ inline constexpr std::array knight_dirs {
 };
 
 inline constexpr std::array wpawn_dirs{
-    Dir{-1, -1},
-    Dir{ 1, -1}
+    Dir{-1,  1},
+    Dir{ 1,  1}
 };
 
 inline constexpr std::array bpawn_dirs{
-    Dir{-1, 1},
-    Dir{ 1, 1}
+    Dir{-1,-1},
+    Dir{ 1,-1}
 };
 
 inline constexpr std::array<Dir, 0> empty_dirs{};
