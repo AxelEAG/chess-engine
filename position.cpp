@@ -123,7 +123,7 @@ constexpr std::uint8_t castleMask(Side side)
 {
 	return (side == Side::white 
 		? (white_kingside | white_queenside) 
-		: (black_kingside | white_queenside));
+		: (black_kingside | black_queenside));
 }
 
 constexpr std::uint8_t castleMask(Side side, CastleSide castleSide)
@@ -170,7 +170,7 @@ void printCastlingRights(uint8_t castlingRights)
 		std::cout << " None";
 	else
 	{
-		if (castlingRights & white_kingside) std::cout << " WK";
+		if (castlingRights & white_kingside) std::cout <<  " WK";
 		if (castlingRights & white_queenside) std::cout << " WQ";
 		if (castlingRights & black_kingside)  std::cout << " BK";
 		if (castlingRights & black_queenside) std::cout << " BQ";
