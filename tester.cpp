@@ -180,7 +180,7 @@ constexpr std::uint8_t castleMask(Side side);
 
 //  p("bre8"), p("brg8"), p("bpe7"), p("bpg7")
 
-// Helper to reflect square if black and queenside
+// Helper to reflect square if black
 Square reflSq(Side side, Square sq)
 {
     if (side == Side::white)
@@ -207,6 +207,18 @@ Square attackSq(PieceType type, Side side, bool kSide)
         assert(0 && "attackSq: bad use of helper function");
         return { 0, 0 };
     }
+}
+
+// For visitAttackers function: test that it's allies / wrong piece it'll ignore them
+
+
+void TestPieceMoveValidation()
+{
+    // Test if capture but no piece or ally
+    // Test if piece but no capture (enemy and ally)
+
+    // Test with diff kinds of pieces
+    // Test disambiguation - Fails when omits it when needed, and gives it when not needed
 }
 
 // Test castling
@@ -256,10 +268,9 @@ void Tester::TestCastlingValidation()
                 pos.set(piece, blockSq);
                 checkMoveValidation(pos, castle, false, "Attempt castling with direct path block");
 
-                Square next{ blockSq + dir };
-                pos.movePiece(blockSq, next);
+                pos.movePiece(blockSq, blockSq + dir);
                 checkMoveValidation(pos, castle, false, "Attempt castling with separated path block");
-                pos.set(Piece::empty, next);
+                pos.set(Piece::empty, blockSq + dir);
             }
 
             // Fails if pieces can attack the king
@@ -268,20 +279,17 @@ void Tester::TestCastlingValidation()
                 const Piece enemy{ toPiece(type, enemySide) };
 
                 Square enemySq{ attackSq(type, side, isKingside)};
-                Square next{ enemySq };
                 pos.set(enemy, enemySq);
                 checkMoveValidation(pos, castle, false, "Attempt castling in check");
 
-                next += dir;
-                pos.movePiece(enemySq, next);
-                enemySq = next;
+                pos.movePiece(enemySq, enemySq + dir);
+                enemySq += dir;
                 checkMoveValidation(pos, castle, false, "Attempt castling through check");
 
-                next += dir;
-                pos.movePiece(enemySq, next);
-                enemySq = next;
+                pos.movePiece(enemySq, enemySq + dir);
+                enemySq += dir;
                 checkMoveValidation(pos, castle, false, "Attempt castling into check");
-                pos.set(Piece::empty, next);
+                pos.set(Piece::empty, enemySq);
 
             }
 

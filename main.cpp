@@ -57,7 +57,7 @@ int main()
 	//}
 	
 	// parserTester();
-	Tester t{ true };
+	Tester t{ false, true };
 	t.TestCastlingValidation();
 
 

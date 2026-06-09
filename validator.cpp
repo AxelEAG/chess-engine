@@ -9,52 +9,51 @@ std::optional<Square> canPawnPush(const Position& pos, Square to, Side side);
 std::optional<Square> canPawnDoublePush(const Position& pos, Square to, Side side);
 bool canPawnEnPassant(const Position& pos, Square to, Side side);
 
-std::optional<Square> disambiguateCandidates(const ParsedMove& move, std::span<const Square> candidates)
-{
-	bool isDisambiguated{ move.fromFile || move.fromRank };
-
-	if (candidates.size() == 0)
-		return std::nullopt;
-
-	if (candidates.size() == 1)
-	{
-		if (isDisambiguated) // Shouldn't disambiguate if only one valid candidate
-			return std::nullopt;
-		return candidates[0];
-	}
-
-	// Need disambiguation for multiple candidates
-	if (!isDisambiguated)
-		return std::nullopt;
-
-	std::optional<Square> match = std::nullopt;
-	for (auto candidate : candidates)
-	{
-		if (move.fromFile && move.fromFile != candidate.file) continue;
-		if (move.fromRank && move.fromRank != candidate.rank) continue;
-		if (match) return std::nullopt;
-		match = candidate;
-	}
-	return match;
-}
-
 std::optional<Square> Validator::generatePieceMove(ParsedMove& move)
 {
-	// Validate capture
-	if (move == capture)
-	{
-		if (auto capture{ m_pos.get(move.to) }; isEmpty(capture) || sideOf(capture) == m_pos.getSide())
-			return std::nullopt;
-	}
-	else if (!m_pos.isEmpty(move.to))
+	assert((move.piece != PieceType::pawn) && (move == none || move == capture) && "Validator::generatePieceMove: Should not be called with a pawn move and just a normal or capture flag");
+	const auto side{ m_pos.getSide() };
+
+	auto target{ m_pos.get(move.to) };
+	if (move == capture && (isEmpty(target) || sideOf(target) == side))
 		return std::nullopt;
 
+	if (move == none && !isEmpty(target))
+		return std::nullopt;
 
-	std::vector<Square> candidates{};
-	auto piece{ toPiece(move.piece, m_pos.getSide()) };
-	visitAttackers(m_pos, move.to, piece, [&](Square sq) {candidates.push_back(sq); return true; });
+	// Find candidates and disambiguate them as needed
+	const bool isDisambiguated{ move.fromFile || move.fromRank };
+	const auto candidate{ toPiece(move.piece, side) };
+	auto getSquare = getInfo(candidate).canSlide ? raycast : jump;
+	std::optional<Square> match = std::nullopt;
 
-	return disambiguateCandidates(move, candidates);
+	int candidateCount{ 0 };
+	for (auto dir : getInfo(candidate).dirs)
+	{
+		auto candidateSq{ getSquare(m_pos, move.to, dir) };
+
+		if (!candidateSq)
+			continue;
+
+		if (auto piece{ m_pos.get(*candidateSq) }; piece != candidate)
+			continue;
+
+		candidateCount += 1;
+
+		if (move.fromFile && move.fromFile != candidateSq->file) continue;
+		if (move.fromRank && move.fromRank != candidateSq->rank) continue;
+		if (match) return std::nullopt; // More than one matched disambiguation?
+		match = candidateSq;
+	}
+
+	if (candidateCount == 0 || !match) // No candidates were found / they were all disambiguated away (bad disambiguation)
+		return std::nullopt;
+	else if (candidateCount == 1 && isDisambiguated) // Didn't need to be disambiguated
+		return std::nullopt;
+	else if (candidateCount > 1 && !isDisambiguated) // Should have been disambiguated
+		return std::nullopt;
+
+	return match;
 }
 
 std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
