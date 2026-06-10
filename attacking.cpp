@@ -113,7 +113,7 @@ bool isAttacked(const Position& pos, Square sq, Side enemySide)
 void getBlockers(const Position& pos, std::vector<Square>& blockers, Square sq, Side blockerSide)
 {
 	for (auto type : { PieceType::bishop, PieceType::rook, PieceType::queen,
-						PieceType::knight, PieceType::king })
+						PieceType::knight })
 	{
 		auto blocker{ toPiece(type, blockerSide) };
 		visitAttackers(pos, sq, blocker, [&](Square sq) { blockers.push_back(sq); return true; });
@@ -204,7 +204,7 @@ bool isCheckmate(Position& pos, Side side)
 			return false;
 	}
 	
-	// Check if can be blocker
+	// Check if can be blocked
 	auto attacker{ pos.get(attackerSq) };
 
 	// Only slideables can be blocked
@@ -225,5 +225,5 @@ bool isCheckmate(Position& pos, Side side)
 		}
 	}
 
-	return false;
+	return true;
 }
