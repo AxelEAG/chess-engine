@@ -21,10 +21,12 @@ public:
     void incTestCount() { ++m_testCount; }
     void incPassedCount() { ++m_passedCount; }
 
-    void validatorTester();
+    bool runMoveParsing(std::string_view input, bool expected);
+    void testMoveParsing();
 
-    bool runIsCheck(Position& pos, Piece piece, Square sq, Side side, bool expected, std::string_view test_name);
+    bool runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate);
     void testIsCheckFunction();
+    void testIsCheckmateFunction();
 
     bool runMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name);
     void testCastlingValidation();
