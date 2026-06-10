@@ -58,7 +58,7 @@ int main()
 	
 	// parserTester();
 	Tester t{ false, true };
-	t.TestCastlingValidation();
+	t.testIsCheckFunction();
 
 
 }

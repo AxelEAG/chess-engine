@@ -6,6 +6,7 @@
 #include <optional>
 #include <string_view>
 #include <vector>
+#include <unordered_set>
 
 #include <thread>
 #include <chrono>
@@ -141,7 +142,7 @@ void Tester::validatorTester()
 
 }
 
-bool Tester::checkMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name)
+bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name)
 {
     incTestCount();
 
@@ -196,13 +197,13 @@ Square attackSq(PieceType type, Side side, bool kSide)
     {
     case PieceType::rook:
     case PieceType::queen:
-        return reflSq(side, { File::e, Rank::r7 });
+        return reflSq(side, E7);
     case PieceType::bishop:
-        return reflSq(side, { kSide ? File::b : File::h, Rank::r4 });
+        return reflSq(side, kSide ? B4 : H4);
     case PieceType::knight:
-        return reflSq(side, { kSide ? File::f : File::d, Rank::r3 });
+        return reflSq(side, kSide ? F3 : D3);
     case PieceType::pawn:
-        return reflSq(side, { kSide ? File::f : File::d, Rank::r2 });
+        return reflSq(side, kSide ? F2 : D2);
     default:
         assert(0 && "attackSq: bad use of helper function");
         return { 0, 0 };
@@ -211,6 +212,99 @@ Square attackSq(PieceType type, Side side, bool kSide)
 
 // For visitAttackers function: test that it's allies / wrong piece it'll ignore them
 
+bool isValid(Square sq);
+
+bool Tester::runIsCheck(Position& pos, Piece piece, Square sq, Side side, bool expected, std::string_view test_name)
+{
+    incTestCount();
+
+    pos.set(piece, sq);
+    bool check{ isCheck(pos, side) };
+
+    if (check != expected)
+    {
+        std::cerr << "[FAILED] Test #" << m_testCount << ' ' << test_name << '\n';
+        if (m_verboseErrors) printDetails(pos);
+        pos.set(Piece::empty, sq);
+        return false;
+    }
+
+    incPassedCount();
+
+    if (m_verbose)
+    {
+        std::cout << "[PASSED] Test #" << m_testCount << ' ' << test_name << '\n';
+        printDetails(pos);
+        // std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+
+    pos.set(Piece::empty, sq);
+
+    return true;
+}
+
+void Tester::testIsCheckFunction()
+{
+
+    auto tName = [](Piece piece, int sq, bool expected) { 
+        return std::string{ toString(piece) } + " on " + std::string{ sqToString(sq) } + (expected ? " " : " not ") + "expected to check"; 
+        };
+
+    TestSummary testSummary{ *this, "IsCheckFunction Validation" };
+
+    Side side{ Side::white };
+    Side enemySide{ !side };
+
+    Square kingSq{ F4 };
+    Square opKingSq{ A8 };
+
+    Position pos{};
+
+    PositionInfo posInfo{
+        .whiteKingSq = side == Side::white ? kingSq : opKingSq,
+        .blackKingSq = side == Side::white ? opKingSq : kingSq,
+        .sideToMove = side,
+        .castlingRights = 0
+    };
+
+    loadInto(pos, {}, posInfo);
+
+    // For every piece on every square, make sure they only give checks on the expected squares (given the king's position (F4))
+
+    std::unordered_set<int> expPawnChecks;
+    if (side == Side::white) expPawnChecks = { E5, G5 };
+    else expPawnChecks = { E3, G3 };
+    std::unordered_set<int> expRookChecks{ A4, B4, C4, D4, E4, G4, H4, F8, F7, F6, F5, F3, F2, F1 };
+    std::unordered_set<int> expKnightChecks{ D3, D5, E6, G6, H5, H3, G2, E2 };
+    std::unordered_set<int> expBishopChecks{ B8, C7, D6, E5, G3, H2, C1, D2, E3, G5, H6 };
+    std::unordered_set<int> expQueenChecks{ A4, B4, C4, D4, E4, G4, H4, F8, F7, F6, F5, F3, F2, F1, B8, C7, D6, E5, G3, H2, C1, D2, E3, G5, H6 };
+    std::array expectedChecks{ expPawnChecks, expRookChecks, expKnightChecks, expBishopChecks, expQueenChecks };
+
+    for (int i{ 0 }; i < 5; ++i)
+    {
+        auto attacker{ toPiece(static_cast<PieceType>(i + 1), enemySide)};
+
+        for (int sq{ 0 }; sq < 64; ++sq)
+        {
+            if (sq == kingSq) continue; // Kinda wonky, overwrites black king? maybe add it back or avoid that square
+            bool expected = expectedChecks[i].contains(sq);
+            runIsCheck(pos, attacker, sq, side, expected, tName(attacker, sq, expected));
+        }
+    }
+
+    // TODO:
+    // Check but with friend pieces (ensure no checks)
+    // Check again but with pieces blocking the way 
+    //      Allies
+    //      Enemies
+    //      Multiple
+    // Other king positions? (edges and corners?)
+    // Test illegal adjacent kings (helpful for the validator)
+    // Multiple attackers
+
+    // Cool but maybe later / (not :( ): brute force implementation of isCheck, generate tons of randomized positions, ensure results match
+
+}
 
 void TestPieceMoveValidation()
 {
@@ -222,7 +316,7 @@ void TestPieceMoveValidation()
 }
 
 // Test castling
-void Tester::TestCastlingValidation()
+void Tester::testCastlingValidation()
 {
     TestSummary testSummary{ *this, "Castling Validation" };
 
@@ -234,8 +328,8 @@ void Tester::TestCastlingValidation()
         Position pos{};
 
         PositionInfo posInfo{
-            .whiteKingSq = { File::e, Rank::r1},
-            .blackKingSq = { File::e, Rank::r8},
+            .whiteKingSq = { E1 },
+            .blackKingSq = { E8 },
             .sideToMove = side,
             .castlingRights = castleMask(side)
         };
@@ -251,11 +345,11 @@ void Tester::TestCastlingValidation()
             const Dir dir = (isKingside ? Dir{ 1, 0 } : Dir{ -1, 0 });
             const std::string_view castle = ( isKingside ? "O-O" : "O-O-O");
 
-            checkMoveValidation(pos, castle, true, "Basic castling check");
+            runMoveValidation(pos, castle, true, "Basic castling check");
 
             // Fails if no castle rights (even if seemingly valid position)
             pos.removeCastleRights(side, castleSide);
-            checkMoveValidation(pos, castle, false, "Attempt castling without rights");
+            runMoveValidation(pos, castle, false, "Attempt castling without rights");
             pos.setCastleRights(side, castleSide);
 
             const File blockFile{ isKingside ? File::f : File::d };
@@ -266,10 +360,10 @@ void Tester::TestCastlingValidation()
             for (auto piece : { bishop, enemyKnight })
             {
                 pos.set(piece, blockSq);
-                checkMoveValidation(pos, castle, false, "Attempt castling with direct path block");
+                runMoveValidation(pos, castle, false, "Attempt castling with direct path block");
 
                 pos.movePiece(blockSq, blockSq + dir);
-                checkMoveValidation(pos, castle, false, "Attempt castling with separated path block");
+                runMoveValidation(pos, castle, false, "Attempt castling with separated path block");
                 pos.set(Piece::empty, blockSq + dir);
             }
 
@@ -280,15 +374,15 @@ void Tester::TestCastlingValidation()
 
                 Square enemySq{ attackSq(type, side, isKingside)};
                 pos.set(enemy, enemySq);
-                checkMoveValidation(pos, castle, false, "Attempt castling in check");
+                runMoveValidation(pos, castle, false, "Attempt castling in check");
 
                 pos.movePiece(enemySq, enemySq + dir);
                 enemySq += dir;
-                checkMoveValidation(pos, castle, false, "Attempt castling through check");
+                runMoveValidation(pos, castle, false, "Attempt castling through check");
 
                 pos.movePiece(enemySq, enemySq + dir);
                 enemySq += dir;
-                checkMoveValidation(pos, castle, false, "Attempt castling into check");
+                runMoveValidation(pos, castle, false, "Attempt castling into check");
                 pos.set(Piece::empty, enemySq);
 
             }

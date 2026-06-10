@@ -23,15 +23,17 @@ public:
 
     void validatorTester();
 
-    bool checkMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name);
-    void TestCastlingValidation();
+    bool runIsCheck(Position& pos, Piece piece, Square sq, Side side, bool expected, std::string_view test_name);
+    void testIsCheckFunction();
+
+    bool runMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name);
+    void testCastlingValidation();
     void printPosInfo(const Position& pos);
     void printDetails(const Position& pos);
 
     friend class TestSummary;
 private:
     Placement p(std::string_view text) { return *Parser(text).parsePlacement(); }
-    Square parseSq(std::string_view sq) { return *Parser(sq).parseSquare(); }
     bool m_verbose{ false };
     bool m_verboseErrors{ false };
     int m_testCount{ 0 };
