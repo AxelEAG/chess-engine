@@ -8,7 +8,7 @@ void Position::movePiece(Square from, Square to)
 {
 	auto piece{ get(from) };
 	if (typeOf(piece) == PieceType::king)
-		setKingSq(getSide(), to);
+		setKingSq(sideOf(piece), to);
 	set(piece, to);
 	set(Piece::empty, from);
 }
