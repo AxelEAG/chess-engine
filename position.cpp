@@ -1,8 +1,6 @@
 #include "position.h"
 
-#include <iostream>
 #include <utility>
-#include <vector>
 
 void Position::movePiece(Square from, Square to)
 {

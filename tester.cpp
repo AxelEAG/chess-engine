@@ -1,11 +1,6 @@
-#include "position.h"
 #include "validator.h"
 #include "tester.h"
 
-#include <array>
-#include <optional>
-#include <string_view>
-#include <vector>
 #include <unordered_set>
 
 #include <thread>

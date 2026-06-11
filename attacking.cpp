@@ -1,7 +1,6 @@
-#include "attacking.h"
+#include "position.h"
 
 #include <utility>
-#include <vector>
 
 // Helper function to get direction between two squares (assumes straight line)
 Dir getDir(Square from, Square to)
@@ -85,11 +84,12 @@ bool canPawnEnPassant(const Position& pos, Square to, Side side)
 		return false;
 
 	const auto piece{ pos.get(enemySq) };
-	if (isEmpty(piece) || piece != toPiece(PieceType::pawn, !side))
+	if (isEmpty(piece) || piece != toPiece(PieceType::pawn, !side)) // These may have to be assertions?)
 		return false;
 
 	return true;
 }
+
 
 
 // Returns true if any piece can attack a given square
@@ -99,15 +99,40 @@ bool isAttacked(const Position& pos, Square sq, Side enemySide)
 						PieceType::knight, PieceType::king, PieceType::pawn })
 	{
 		auto attacker{ toPiece(type, enemySide) };
-		std::optional<Square> attackerSq;
-		visitAttackers(pos, sq, attacker, [&](Square sq) { attackerSq = sq; return false; });
+		auto getSquare = getInfo(attacker).canSlide ? raycast : jump;
 
-		if (attackerSq)
-			return true;
+		for (auto dir : getInfo(attacker).dirs)
+		{
+			auto attackerSq{ getSquare(pos, sq, dir) };
+
+			if (!attackerSq)
+				continue;
+
+			if (pos.get(*attackerSq) == attacker)
+				return true;
+		}
 	}
 
 	return false;
 }
+
+// Stores in the given array all attackers of a square
+void saveAttackers(const Position& pos, Square sq, Piece attacker, std::vector<Square>& attackers)
+{
+	auto getSquare = getInfo(attacker).canSlide ? raycast : jump;
+
+	for (auto dir : getInfo(attacker).dirs)
+	{
+		auto attackerSq{ getSquare(pos, sq, dir) };
+
+		if (!attackerSq)
+			continue;
+
+		if (pos.get(*attackerSq) == attacker)
+			attackers.push_back(*attackerSq);
+	}
+}
+
 
 // Stores all pieces that can get to a given empty square
 void getBlockers(const Position& pos, std::vector<Square>& blockers, Square sq, Side blockerSide)
@@ -116,7 +141,7 @@ void getBlockers(const Position& pos, std::vector<Square>& blockers, Square sq, 
 						PieceType::knight })
 	{
 		auto blocker{ toPiece(type, blockerSide) };
-		visitAttackers(pos, sq, blocker, [&](Square sq) { blockers.push_back(sq); return true; });
+		saveAttackers(pos, sq, blocker, blockers);
 	}
 	// Attack and movement is the same for everything but pawns, check their different movement
 	if (auto push{ canPawnPush(pos, sq, blockerSide) })
@@ -132,7 +157,7 @@ void getAttackers(const Position& pos, std::vector<Square>& attackers, Square sq
 						PieceType::knight, PieceType::king, PieceType::pawn })
 	{
 		auto attacker{ toPiece(type, attackerSide) };
-		visitAttackers(pos, sq, attacker, [&](Square sq) { attackers.push_back(sq); return true; });
+		saveAttackers(pos, sq, attacker, attackers);
 	}
 }
 

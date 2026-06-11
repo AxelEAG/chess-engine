@@ -54,11 +54,16 @@ int main()
 	//	std::cout << '\n';
 	//	position.doMove(*move);
 	//	printBoard(position);
+	//	if (parsedMove->checkmate)
+	//	{
+	//		std::cout << "It's a checkmate! " << !position.getSide() << " wins!";
+	//		break;
+	//	}
 	//}
 	
 	// parserTester();
-	Tester t{ false, true };
-	t.testIsCheckFunction();
+	Tester t{ true, true };
+	t.testMoveParsing();
 
 
 }

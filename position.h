@@ -2,14 +2,25 @@
 #define POSITION_H
 
 #include "move.h"
-#include "setup.h"
 
-#include <array>
 #include <cstddef>
 #include <memory>
-#include <optional>
+#include <vector>
 
-struct Placement;
+struct Placement
+{
+	Piece piece;
+	Square place;
+};
+
+struct PositionInfo
+{
+	Square whiteKingSq;
+	Square blackKingSq;
+	Side   sideToMove;
+	std::optional<Square> enPassant{ std::nullopt };
+	std::uint8_t castlingRights{ 0b0000'1111 };
+};
 
 std::size_t getIndex(Square sq);
 

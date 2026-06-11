@@ -1,6 +1,4 @@
 #include "position.h"
-#include <iostream>
-#include <vector>
 
 void Position::resetBoard()
 {

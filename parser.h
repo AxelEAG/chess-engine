@@ -1,11 +1,9 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "move.h"
-#include "setup.h"
+#include "position.h"
 
 #include <string_view>
-#include <optional>
 
 // Parser class for a given string move. 
 // Performs no validation, only syntax check.

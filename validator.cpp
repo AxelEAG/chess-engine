@@ -1,8 +1,6 @@
 #include "validator.h"
 
 #include <span>
-#include <vector>
-#include <iostream>
 
 bool isValid(Square sq);
 std::optional<Square> canPawnPush(const Position& pos, Square to, Side side);
