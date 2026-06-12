@@ -232,6 +232,11 @@ constexpr Rank PawnRank(Side side)
     return (side == Side::white ? Rank::r2 : Rank::r7);
 }
 
+constexpr Rank EnPassantRank(Side side)
+{
+    return (side == Side::white ? Rank::r5 : Rank::r4);
+}
+
 constexpr Square QueensRookSq(Side side)
 {
     return Square { File::a, MajorRank(side) };
@@ -312,4 +317,29 @@ constexpr std::string_view sqToString(int sq)
     return names[static_cast<std::size_t>(sq)];
 }
 
+inline constexpr std::array pieceTypes{
+    PieceType::pawn,
+    PieceType::rook,
+    PieceType::knight,
+    PieceType::bishop,
+    PieceType::queen,
+    PieceType::king,
+};
+
+inline constexpr std::array pieces{
+    Piece::empty,
+    Piece::white_pawn,
+    Piece::white_rook,
+    Piece::white_knight,
+    Piece::white_bishop,
+    Piece::white_queen,
+    Piece::white_king,
+
+    Piece::black_pawn,
+    Piece::black_rook,
+    Piece::black_knight,
+    Piece::black_bishop,
+    Piece::black_queen,
+    Piece::black_king,
+};
 #endif

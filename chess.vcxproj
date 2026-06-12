@@ -130,7 +130,6 @@
     <ClCompile Include="position.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parser.cpp" />
-    <ClCompile Include="parser_test.cpp" />
     <ClCompile Include="attacking.cpp" />
     <ClCompile Include="setup.cpp" />
     <ClCompile Include="tester.cpp" />
@@ -142,9 +141,7 @@
     <ClInclude Include="parser.h" />
     <ClInclude Include="piece.h" />
     <ClInclude Include="position.h" />
-    <ClInclude Include="setup.h" />
     <ClInclude Include="square.h" />
-    <ClInclude Include="attacking.h" />
     <ClInclude Include="tester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

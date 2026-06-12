@@ -33,7 +33,8 @@ enum Rank
 	r3,
 	r2,
 	r1,
-	max_ranks
+	max_ranks,
+	rinvalid
 };
 
 enum File
@@ -46,13 +47,14 @@ enum File
 	f,
 	g,
 	h,
-	max_files
+	max_files,
+	finvalid
 };
 
 struct Square
 {
-	File file{};
-	Rank rank{};
+	File file{finvalid};
+	Rank rank{rinvalid};
 
 	constexpr Square() = default;
 	constexpr Square(Squaree sq) : Square{ sq % 8, sq / 8 } {}
@@ -80,12 +82,25 @@ struct Square
 }; 
 
 
-inline constexpr std::array ranks{ '8', '7', '6', '5', '4', '3', '2', '1' };
+inline constexpr std::array ranks{ '8', '7', '6', '5', '4', '3', '2', '1'};
 inline constexpr std::array files{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
 inline std::ostream& operator<<(std::ostream& out, Square sq)
 {
-	return out << files[sq.file] << ranks[sq.rank];
+	if (sq.rank >= max_ranks || sq.file >= max_files)
+		return out << ' ' << ' ';
+	else 
+		return out << files[sq.file] << ranks[sq.rank];
+}
+
+constexpr std::string toString(Square sq)
+{
+	return std::string{ files[sq.file] } + std::string{ ranks[sq.rank] };
+}
+
+constexpr std::string toString(File file)
+{
+	return std::string{ files[file] };
 }
 
 #endif

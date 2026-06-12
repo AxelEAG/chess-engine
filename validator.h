@@ -45,4 +45,15 @@ private:
 	Undo m_undo;
 };
 
+std::optional<Square> raycast(const Position& pos, Square from, Dir dir);
+std::optional<Square> jump(const Position& pos, Square from, Dir dir);
+
+std::optional<Square> canPawnPush(const Position& pos, Square to, Side side);
+std::optional<Square> canPawnDoublePush(const Position& pos, Square to, Side side);
+std::optional<Square> pawnCaptureSq(const Position& pos, File fromFile, Square to, Side side);
+bool canPawnEnPassant(const Position& pos, Square to, Side side);
+
+bool isAttacked(const Position& pos, Square sq, Side enemySide);
+bool isCheck(const Position& pos, Side side);
+bool isCheckmate(Position& pos, Side side);
 #endif

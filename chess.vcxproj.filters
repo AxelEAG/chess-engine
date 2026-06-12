@@ -24,9 +24,6 @@
     <ClCompile Include="parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="parser_test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="validator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,12 +54,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="position.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="attacking.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="setup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tester.h">

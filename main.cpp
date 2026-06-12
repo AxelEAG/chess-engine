@@ -1,13 +1,8 @@
-#include "position.h"
 #include "validator.h"
 #include "tester.h"
 
-#include <iostream>
 #include <string>
-#include <string_view>
 #include <algorithm>
-
-#include <vector>
 
 // Goal: Create a terminal version of chess
 // Display board
@@ -21,7 +16,6 @@
 // Player class?
 
 void printBoard(const Position& pos);
-void parserTester();
 std::optional<ParsedMove> parseMove(std::string_view text);
 
 int main()
@@ -62,8 +56,12 @@ int main()
 	//}
 	
 	// parserTester();
-	Tester t{ true, true };
-	t.testMoveParsing();
+	Tester t{ false, true };
+	t.testPawnMoveValidation();
 
+	//t.testMoveParsing();
+	//t.testIsCheckFunction();
+	//t.testIsCheckmateFunction();
+	// t.testCastlingValidation();
 
 }

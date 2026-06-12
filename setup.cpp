@@ -4,6 +4,12 @@ void Position::resetBoard()
 {
 	for (auto& square : m_board)
 		square = Piece::empty;
+
+	m_enPassant.reset();
+	m_sideToMove = Side::white;
+	m_castlingRights = 0;
+	m_whiteKingSq = {};
+	m_blackKingSq = {};
 }
 
 void Position::setPair(Piece piece, File file, Rank rank)

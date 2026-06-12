@@ -27,8 +27,11 @@ public:
     void testIsCheckFunction();
     void testIsCheckmateFunction();
 
-    bool runMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name);
+    bool runMoveValidation(Position& pos, std::string_view input, bool expected);
+    
+    void testPawnMoveValidation();
     void testCastlingValidation();
+
     void printPosInfo(const Position& pos);
     void printDetails(const Position& pos);
 
