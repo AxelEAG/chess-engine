@@ -72,6 +72,18 @@ std::optional<Square> canPawnDoublePush(const Position& pos, Square to, Side sid
 	return std::nullopt;
 }
 
+std::optional<Square> pawnCaptureSq(const Position& pos, File fromFile, Square to, Side side)
+{
+	const int forward{ pawnDir(side) };
+
+	Square from{ fromFile, to.rank - forward };
+	auto pawn{ toPiece(PieceType::pawn, side) };
+	if (auto piece{ pos.get(from) }; piece != pawn)
+		return std::nullopt;
+
+	return from;
+}
+
 bool canPawnEnPassant(const Position& pos, Square to, Side side)
 {
 	const auto enPassantSq{ pos.getEnPassant() };

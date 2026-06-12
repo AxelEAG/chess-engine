@@ -76,6 +76,16 @@ constexpr bool isPromotion(const ParsedMove& move)
 	return move.flags >= promoteKnight;
 }
 
+constexpr bool isCapturePromotion(const ParsedMove& move)
+{
+	return move.flags >= capturePromoteKnight;
+}
+
+constexpr bool isCapture(const ParsedMove& move)
+{
+	return move == capture || move.flags >= capturePromoteKnight;
+}
+
 constexpr bool isCastle(const ParsedMove& move)
 {
 	return (move.flags == kingCastle || move.flags == queenCastle);

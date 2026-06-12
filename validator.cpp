@@ -3,9 +3,6 @@
 #include <span>
 
 bool isValid(Square sq);
-std::optional<Square> canPawnPush(const Position& pos, Square to, Side side);
-std::optional<Square> canPawnDoublePush(const Position& pos, Square to, Side side);
-bool canPawnEnPassant(const Position& pos, Square to, Side side);
 
 std::optional<Square> Validator::generatePieceMove(ParsedMove& move)
 {
@@ -60,16 +57,32 @@ std::optional<Square> Validator::generatePawnMove(ParsedMove& move)
 	const int  forward {  pawnDir(side)  };
 	const Dir  revDir  { 0, -1 * forward };
 
+	// Invalid push to
+	if (move.to.rank == MajorRank(side))
+		return std::nullopt;
+
 	// Invalid promotion
 	if (isPromotion(move) && move.to.rank != PromotionRank(side))
 		return std::nullopt;
 
-	if (move == capture)
+	// Invalid move to last rank without promotion
+	if (move.to.rank == PromotionRank(side) && !isPromotion(move))
+		return std::nullopt;
+	
+	if (isCapturePromotion(move))
 	{
-		Square from{ *move.fromFile, move.to.rank - forward };
-		auto pawn{ toPiece(PieceType::pawn, side) };
-		if (auto piece{ m_pos.get(from) }; piece != pawn)
-			return std::nullopt;
+		auto from{ pawnCaptureSq(m_pos, *move.fromFile, move.to, side) };
+		if (!from) return std::nullopt;
+
+		auto capture{ m_pos.get(move.to) };
+		if (!isEmpty(capture) && sideOf(capture) == !side)
+			return from;
+		return std::nullopt;
+	}
+	else if (move == capture)
+	{
+		auto from{ pawnCaptureSq(m_pos, *move.fromFile, move.to, side) };
+		if (!from) return std::nullopt;
 
 		if (auto capture{ m_pos.get(move.to) }; !isEmpty(capture))
 		{
