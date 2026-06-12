@@ -169,6 +169,7 @@ Square attackSq(PieceType type, Side side, bool kSide)
     case PieceType::knight:
         return reflSq(side, kSide ? F3 : D3);
     case PieceType::pawn:
+    case PieceType::king:
         return reflSq(side, kSide ? F2 : D2);
     default:
         assert(0 && "attackSq: bad use of helper function");
@@ -530,47 +531,56 @@ void Tester::testCastlingValidation()
             const Dir dir = (isKingside ? Dir{ 1, 0 } : Dir{ -1, 0 });
             const std::string_view castle = ( isKingside ? "O-O" : "O-O-O");
 
-            runMoveValidation(pos, castle, true); // Basic castling check
+            runMoveValidation(pos, castle, true);                                // Basic castling check
 
             // Fails if no castle rights (even if seemingly valid position)
             pos.removeCastleRights(side, castleSide);
-            runMoveValidation(pos, castle, false); // Attempt castling without rights
+            runMoveValidation(pos, castle, false);                               // Attempt castling without rights
             pos.setCastleRights(side, castleSide);
 
             const File blockFile{ isKingside ? File::f : File::d };
-            const Square blockSq{ reflSq(side, {blockFile, Rank::r1}) };
-            const Piece bishop{ toPiece(PieceType::bishop, side) };  // TODO: test all ally pieces?
-            const Piece enemyKnight{ toPiece(PieceType::knight, enemySide) }; // Not necessary but same validation with enemy piece (that doesn't give check)
-
-            for (auto piece : { bishop, enemyKnight })
+            for (auto piece : {toPiece(PieceType::bishop, side), toPiece(PieceType::knight, side), toPiece(PieceType::queen, side), toPiece(PieceType::rook, side), toPiece(PieceType::knight, enemySide) })
             {
+                Square blockSq{ reflSq(side, {blockFile, Rank::r1}) };
+
                 pos.set(piece, blockSq);
                 runMoveValidation(pos, castle, false); // Attempt castling with direct path block
+                pos.set(Piece::empty, blockSq);
 
-                pos.movePiece(blockSq, blockSq + dir);
+                blockSq += dir;
+
+                pos.set(piece, blockSq);
                 runMoveValidation(pos, castle, false); // Attempt castling with separated path block
-                pos.set(Piece::empty, blockSq + dir); 
-                // TODO: For queenside should check b file too
+                pos.set(Piece::empty, blockSq); 
+
+                if (castleSide == CastleSide::queenside)
+                {
+                    blockSq += dir;
+                    pos.set(piece, blockSq);
+                    runMoveValidation(pos, castle, false); // Attempt castling with 2-separated path block
+                    pos.set(Piece::empty, blockSq);
+                }
             }
 
             // Fails if pieces can attack the king
-            for (auto type : { PieceType::queen, PieceType::rook, PieceType::bishop, PieceType::knight, PieceType::pawn })
+            for (auto type : pieceTypes) // (includes king, would be two on the board, but helpful for validation of temporary move checks)
             {
                 const Piece enemy{ toPiece(type, enemySide) };
 
                 Square enemySq{ attackSq(type, side, isKingside)};
                 pos.set(enemy, enemySq);
                 runMoveValidation(pos, castle, false); // Attempt castling in check
-
-                pos.movePiece(enemySq, enemySq + dir);
-                enemySq += dir;
-                runMoveValidation(pos, castle, false); // Attempt castling through check
-
-                pos.movePiece(enemySq, enemySq + dir);
-                enemySq += dir;
-                runMoveValidation(pos, castle, false); // Attempt castling into check
                 pos.set(Piece::empty, enemySq);
 
+                enemySq += dir;
+                pos.set(enemy, enemySq);
+                runMoveValidation(pos, castle, false); // Attempt castling through check
+                pos.set(Piece::empty, enemySq);
+
+                enemySq += dir;
+                pos.set(enemy, enemySq);
+                runMoveValidation(pos, castle, false); // Attempt castling into check
+                pos.set(Piece::empty, enemySq);
             }
 
         }
