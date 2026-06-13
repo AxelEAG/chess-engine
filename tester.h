@@ -5,6 +5,8 @@
 
 #include <format>
 
+class TestCounter;
+
 class Tester
 {
 public:
@@ -16,19 +18,21 @@ public:
 
     void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo);
 
-    void resetCount() { m_testCount = 0; m_passedCount = 0; }
-    void incTestCount() { ++m_testCount; }
-    void incPassedCount() { ++m_passedCount; }
-
-    bool runMoveParsing(std::string_view input, bool expected);
+    bool runMoveParsing(std::string_view input, bool expected, TestCounter& test);
     void testMoveParsing();
 
-    bool runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate);
+    bool runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate, TestCounter& test);
     void testIsCheckFunction();
     void testIsCheckmateFunction();
 
-    bool runMoveValidation(Position& pos, std::string_view input, bool expected);
-    void validatePawnMoves(Piece pieceToValidate, Side side);
+    bool runMoveValidation(Position& pos, std::string_view input, bool expected, TestCounter& test);
+    void validatePawnBasicMoves(Piece pieceToValidate, Side side, TestCounter& test);
+    void validatePawnBlockedMoves(Piece pieceToValidate, Side side, TestCounter& test);
+    void validatePawnCaptures(Piece pieceToValidate, Side side, TestCounter& test);
+    void validatePawnEnPassant(Piece pieceToValidate, Side side, TestCounter& test);
+    void validatePawnCapturePromotion(Piece pieceToValidate, Side side, TestCounter& test);
+
+    void validatePawnMoves(Piece pieceToValidate, Side side, TestCounter& test);
 
     void testCastlingValidation();
     void testPawnMoveValidation();
@@ -37,62 +41,99 @@ public:
     void printPosInfo(const Position& pos);
     void printDetails(const Position& pos);
 
+    friend class TestCounter;
     friend class TestSummary;
-    friend class SubTestSummary;
+    friend class SubtestSummary;
 
 private:
     Placement p(std::string_view text) { return *Parser(text).parsePlacement(); }
     bool m_verbose{ false };
     bool m_verboseErrors{ false };
-    int m_testCount{ 0 };
-    int m_passedCount{ 0 };
 };
 
-class TestSummary
+class TestCounter
 {
 public:
-    TestSummary(Tester& tester, std::string_view name) : m_test_name{ name }, m_tester{ tester }
+    virtual ~TestCounter() = default;
+
+    virtual int incTestCount() = 0;
+    virtual void incPassedCount() = 0;
+    virtual int getDepth() = 0;
+};
+
+inline std::string makeBanner(std::string_view text, int tab = 0, int width = 50)
+{
+    std::string title = " " + std::string{ text } + " ";
+    std::string tabSpace = std::string(tab, ' ');
+
+    if (static_cast<int>(title.size()) + tab >= width)
+        return tabSpace + title;
+
+    int totalPadding = width - tab - static_cast<int>(title.size());
+    int leftPadding = totalPadding / 2;
+    int rightPadding = totalPadding - leftPadding;
+
+    return tabSpace + std::string(leftPadding, '=') + title + std::string(rightPadding, '=');
+}
+
+class TestSummary : public TestCounter
+{
+public:
+    TestSummary(std::string_view name) : m_name{ name }
     {
-        std::cout << std::format("========== {:^25} ==========", m_test_name) << '\n' << '\n';
-        m_tester.resetCount();
+        std::cout << makeBanner(name) << '\n' << '\n';
     }
 
     ~TestSummary()
     {
-        std::cout << '[' << m_tester.m_passedCount << '/' << m_tester.m_testCount << ']' << " Total Tests passed. \n \n";
+        std::cout << '[' << m_passedCount << '/' << m_testCount << ']' << " Total Tests passed. \n \n";
     }
 
+    int incTestCount() override { return ++m_testCount; }
+    void incPassedCount() override { ++m_passedCount; }
+    int getDepth() override { return m_depth; };
+
+    friend class SubtestSummary;
+    int m_testCount{ 0 };
+    int m_passedCount{ 0 };
+
 private:
-    std::string m_test_name;
-    Tester& m_tester;
+    std::string m_name;
+    int m_depth{ 0 };
 };
 
-class SubTestSummary
+class SubtestSummary : public TestCounter
 {
 public:
-    SubTestSummary(Tester& tester, std::string_view name) : m_subtest_name{ name }, m_tester{ tester }
+    SubtestSummary(TestCounter& parent, std::string_view name, bool isTracked = true) 
+        : m_parent{ parent }
+        , m_name{ name }
+        , m_isTracked {isTracked}
+        , m_depth {parent.getDepth() + 1}
     {
-        m_savedPassedCount = m_tester.m_passedCount;
-        m_savedTotalCount = m_tester.m_testCount;
-
-        std::cout << "    " << std::format("========== {:^25} ==========", m_subtest_name) << '\n' << '\n';
-
-        m_tester.resetCount();
+        if (m_isTracked)
+            std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
     }
 
-    ~SubTestSummary()
+    ~SubtestSummary()
     {
-        std::cout << "    " << '[' << m_tester.m_passedCount << '/' << m_tester.m_testCount << ']' << " Tests passed. \n \n";
-
-        m_tester.m_passedCount += m_savedPassedCount;
-        m_tester.m_testCount += m_savedTotalCount;
+        if (m_isTracked)
+            std::cout << std::string(4 * getDepth(), ' ') << '[' << m_passedCount << '/' << m_testCount << ']' << " Tests passed. \n \n";
     }
+
+    int incTestCount() override { m_parent.incTestCount(); return ++m_testCount; }
+    void incPassedCount() override { m_parent.incPassedCount(); ++m_passedCount; }
+    int getDepth() override { return m_depth; };
+
+    int m_testCount{ 0 };
+    int m_passedCount{ 0 };
 
 private:
-    std::string m_subtest_name;
-    Tester& m_tester;
-    int m_savedPassedCount{};
-    int m_savedTotalCount{};
+
+    std::string m_name;
+    TestCounter& m_parent;
+    bool m_isTracked{ true };
+    int m_depth{ 0 };
 };
 
 #endif

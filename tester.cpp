@@ -62,36 +62,35 @@ void playthroughTester()
     Position position{};
 }
 
-bool Tester::runMoveParsing(std::string_view input, bool expected)
+bool Tester::runMoveParsing(std::string_view input, bool expected, TestCounter& test)
 {
     std::string test_name = "Expected " + std::string{ input } + " to" + (expected ? " " : " not ") + "be parsed";
 
-    incTestCount();
+    const int testNumber{ test.incTestCount() };
 
     auto parsedMove{ parseMove(input) };
 
     if (static_cast<bool>(parsedMove) != expected) // Validation should match expectation
     {
-        std::cerr << "[FAILED] Test #" << m_testCount << ' ' << test_name << '\n';
+        std::cerr << "[FAILED] Test #" << testNumber << ' ' << test_name << '\n';
         return false;
     }
 
-    incPassedCount();
+    test.incPassedCount();
 
     if (m_verbose)
     {
-        std::cout << "[PASSED] Test #" << m_testCount << ' ' << test_name << '\n';
+        std::cout << "[PASSED] Test #" << testNumber << ' ' << test_name << '\n';
         // std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     return true;
 }
-
-bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expected)
+bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expected, TestCounter& test)
 {
     std::string test_name = "Expected " + std::string{ input } + " to be" + (expected ? " " : " in") + "valid";
 
-    incTestCount();
+    const int testNumber{ test.incTestCount() };
 
     auto parsedMove{ parseMove(input) };
     assert(parsedMove && "checkMoveValidation: Should have parsed input successfuly.");
@@ -99,16 +98,16 @@ bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expec
 
     if (static_cast<bool>(move) != expected) // Validation should match expectation
     {
-        std::cerr << "[FAILED] Test #" << m_testCount << ' ' << test_name << '\n';
+        std::cerr << "[FAILED] Test #" << testNumber << ' ' << test_name << '\n';
         if (m_verboseErrors) printDetails(pos);
         return false;
     }
 
-    incPassedCount();
+    test.incPassedCount();
 
     if (m_verbose)
     {
-        std::cout << "[PASSED] Test #" << m_testCount << ' ' << test_name << '\n';
+        std::cout << "[PASSED] Test #" << testNumber << ' ' << test_name << '\n';
         printDetails(pos);
         // std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -116,28 +115,28 @@ bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expec
     return true;
 }
 
-bool Tester::runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate)
+bool Tester::runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate, TestCounter& test)
 {
     std::string test_name = std::string{ toString(piece) } + " on " + std::string{ sqToString(sq) } + (expected ? " " : " not ") + "expected to check" + (checkmate ? "mate" : "");
 
-    incTestCount();
+    const int testNumber{ test.incTestCount() };
 
     pos.set(piece, sq);
     bool result{ checkmate ? isCheckmate(pos, side) : isCheck(pos, side) };
 
     if (result != expected)
     {
-        std::cerr << "[FAILED] Test #" << m_testCount << ' ' << test_name << '\n';
+        std::cerr << "[FAILED] Test #" << testNumber << ' ' << test_name << '\n';
         if (m_verboseErrors) printDetails(pos);
         pos.set(Piece::empty, sq);
         return false;
     }
 
-    incPassedCount();
+    test.incPassedCount();
 
     if (m_verbose)
     {
-        std::cout << "[PASSED] Test #" << m_testCount << ' ' << test_name << '\n';
+        std::cout << "[PASSED] Test #" << testNumber << ' ' << test_name << '\n';
         printDetails(pos);
         // std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -186,7 +185,7 @@ void Tester::testIsCheckFunction()
         return std::string{ toString(piece) } + " on " + std::string{ sqToString(sq) } + (expected ? " " : " not ") + "expected to check"; 
         };
 
-    TestSummary testSummary{ *this, "IsCheckFunction Validation" };
+    TestSummary test{ "IsCheckFunction Validation" };
 
     Side side{ Side::white };
     Side enemySide{ !side };
@@ -224,7 +223,7 @@ void Tester::testIsCheckFunction()
         {
             if (sq == kingSq) continue; // Kinda wonky, overwrites black king? maybe add it back or avoid that square
             bool expected = expectedChecks[i].contains(sq);
-            runCheckFunc(pos, attacker, sq, side, expected, false);
+            runCheckFunc(pos, attacker, sq, side, expected, false, test);
         }
     }
 
@@ -246,7 +245,7 @@ void Tester::testIsCheckFunction()
 
 void Tester::testIsCheckmateFunction()
 {
-    TestSummary testSummary{ *this, "IsCheckmateFunction Validation" };
+    TestSummary test{ "IsCheckmateFunction Validation" };
 
     Side side{ Side::white };
     Side enemySide{ !side };
@@ -270,39 +269,39 @@ void Tester::testIsCheckmateFunction()
     auto attacker{ toPiece(PieceType::rook, side) };
 
 
-    runCheckFunc(pos, attacker, C1, enemySide, true, true);
-    runCheckFunc(pos, attacker, D1, enemySide, true, true);
-    runCheckFunc(pos, attacker, E1, enemySide, true, true);
+    runCheckFunc(pos, attacker, C1, enemySide, true, true, test);
+    runCheckFunc(pos, attacker, D1, enemySide, true, true, test);
+    runCheckFunc(pos, attacker, E1, enemySide, true, true, test);
 
-    runCheckFunc(pos, attacker, B1, enemySide, false, true); // king can eat it
+    runCheckFunc(pos, attacker, B1, enemySide, false, true, test); // king can eat it
 
     pos.set(toPiece(PieceType::bishop, enemySide), H8);  // Bishop's not doing anything
-    runCheckFunc(pos, attacker, C1, enemySide, true, true);
-    runCheckFunc(pos, attacker, D1, enemySide, true, true);
-    runCheckFunc(pos, attacker, E1, enemySide, true, true);
+    runCheckFunc(pos, attacker, C1, enemySide, true, true, test);
+    runCheckFunc(pos, attacker, D1, enemySide, true, true, test);
+    runCheckFunc(pos, attacker, E1, enemySide, true, true, test);
 
-    runCheckFunc(pos, attacker, B1, enemySide, false, true); // king can eat it
+    runCheckFunc(pos, attacker, B1, enemySide, false, true, test); // king can eat it
 
     pos.movePiece(H8, H7); // Bishop can now block
-    runCheckFunc(pos, attacker, C1, enemySide, false, true);
-    runCheckFunc(pos, attacker, D1, enemySide, false, true);
-    runCheckFunc(pos, attacker, E1, enemySide, false, true);
+    runCheckFunc(pos, attacker, C1, enemySide, false, true, test);
+    runCheckFunc(pos, attacker, D1, enemySide, false, true, test);
+    runCheckFunc(pos, attacker, E1, enemySide, false, true, test);
 
-    runCheckFunc(pos, attacker, B1, enemySide, false, true); // Bishop can eat it
+    runCheckFunc(pos, attacker, B1, enemySide, false, true, test); // Bishop can eat it
 
     pos.movePiece(H7, H6); // Bishop can now block / eat
-    runCheckFunc(pos, attacker, C1, enemySide, false, true); // can eat it
-    runCheckFunc(pos, attacker, D1, enemySide, false, true); 
-    runCheckFunc(pos, attacker, E1, enemySide, false, true);
+    runCheckFunc(pos, attacker, C1, enemySide, false, true, test); // can eat it
+    runCheckFunc(pos, attacker, D1, enemySide, false, true, test);
+    runCheckFunc(pos, attacker, E1, enemySide, false, true, test);
 
-    runCheckFunc(pos, attacker, B1, enemySide, false, true);
+    runCheckFunc(pos, attacker, B1, enemySide, false, true, test);
 
     pos.movePiece(H6, H4); // Bishop cannot do anything
-    runCheckFunc(pos, attacker, C1, enemySide, true, true);
-    runCheckFunc(pos, attacker, D1, enemySide, true, true);
-    runCheckFunc(pos, attacker, E1, enemySide, false, true); // can eat it
+    runCheckFunc(pos, attacker, C1, enemySide, true, true, test);
+    runCheckFunc(pos, attacker, D1, enemySide, true, true, test);
+    runCheckFunc(pos, attacker, E1, enemySide, false, true, test); // can eat it
 
-    runCheckFunc(pos, attacker, B1, enemySide, false, true);
+    runCheckFunc(pos, attacker, B1, enemySide, false, true, test);
 
     // Test checks
     //      king can move out of
@@ -322,7 +321,7 @@ void Tester::testIsCheckmateFunction()
 
 void Tester::testPieceMoveValidation()
 {
-    TestSummary testSummary{ *this, "Piece Move Validation" };
+    TestSummary test{  "Piece Move Validation" };
 
 
     // for a given piece and square, get places it can get from
@@ -347,179 +346,300 @@ void Tester::testPieceMoveValidation()
 
 // bool runMoveValidation(Position& pos, std::string_view input, bool expected, std::string_view test_name);
 
-void Tester::validatePawnMoves(Piece pieceToValidate, Side side)
+void Tester::validatePawnBasicMoves(Piece pieceToValidate, Side side, TestCounter& test)
 {
     Position pos{};
     pos.resetBoard();
     pos.m_sideToMove = side;
 
-    const auto enemySide{ !side };
-
-    const auto promotionRank{ PromotionRank(side) };
-    const auto initialRank{ PawnRank(side) };
-
+    bool isPawn{ pieceToValidate == toPiece(PieceType::pawn, side) };
     const Dir dir{ 0, pawnDir(side) };
-    const Dir left{ -1, 0 };
-    const Dir right{ 1, 0 };
 
-    const auto pawn{ toPiece(PieceType::pawn, side) };
-
-    bool isPawn{ pieceToValidate == pawn };
+    SubtestSummary subtest{ test, "Basic Move", isPawn }; // only track details of pawn 
 
     // For every square, check all squares
     for (int sq{ A8 }; sq <= H1; ++sq)
     {
         const Square from{ sq };
-        if (from.rank == promotionRank) continue; // Skip when pawn is on last rank for both sides (should be promoted piece by then)
+        if (from.rank == PromotionRank(side)) continue; // Skip when pawn is on last rank for both sides (should be promoted piece by then)
+        pos.set(pieceToValidate, from);
 
         // Define valid moves - any other move should be false
         const Square pushSq{ from + dir };
         const Square dbPushSq{ pushSq + dir };
-        const Square captureLeftSq{ pushSq + left };
-        const Square captureRightSq{ pushSq + right };
-        const Square enPassantLeftSq{ from + left };
-        const Square enPassantRightSq{ from + right };
 
-        const bool validPromotion{ pushSq.rank == promotionRank };
+        const bool validPromotion{ pushSq.rank == PromotionRank(side) };
 
         const bool canPush{ isPawn && !validPromotion };
-        const bool canDoublePush{ isPawn && (from.rank == initialRank) };
+        const bool canDoublePush{ isPawn && (from.rank == PawnRank(side)) };
         const bool canPromote{ isPawn && validPromotion };
-        const bool canCapture{ isPawn && !validPromotion };
-        const bool canCapPromote{ isPawn && validPromotion };
 
+        runMoveValidation(pos, toString(pushSq), canPush, subtest);               // Test regular pawn push
 
+        runMoveValidation(pos, toString(from), false, subtest);                   // Test invalid 'pushing' to its own square
+
+        for (std::string promote_to : {"Q", "R", "B", "N"})                       // Test (in)valid promoting
+            runMoveValidation(pos, toString(pushSq) + "=" + promote_to, canPromote, subtest);
+
+        if (isValid(dbPushSq))                                                    // Test (in)valid double push
+            runMoveValidation(pos, toString(dbPushSq), canDoublePush, subtest);
+
+        pos.set(Piece::empty, from);
+    }
+}
+
+void Tester::validatePawnBlockedMoves(Piece pieceToValidate, Side side, TestCounter& test)
+{
+    Position pos{};
+    pos.resetBoard();
+    pos.m_sideToMove = side;
+
+    const auto pawn{ toPiece(PieceType::pawn, side) };
+    bool isPawn{ pieceToValidate == pawn };
+    const Dir dir{ 0, pawnDir(side) };
+
+    SubtestSummary subtest{ test, "Blocked Move", isPawn };
+
+    // For every square, check all squares
+    for (int sq{ A8 }; sq <= H1; ++sq)
+    {
+        const Square from{ sq };
+        if (from.rank == PromotionRank(side)) continue; // Skip when pawn is on last rank for both sides (should be promoted piece by then)
         pos.set(pieceToValidate, from);
 
-        runMoveValidation(pos, toString(pushSq), canPush);               // Test regular pawn push
-
-        runMoveValidation(pos, toString(from), false);                   // Test invalid 'pushing' to its own square
-
-        for (std::string promote_to : {"Q", "R", "B", "N"})              // Test (in)valid promoting
-            runMoveValidation(pos, toString(pushSq) + "=" + promote_to, canPromote);
-
-        if (isValid(dbPushSq))                                           // Test (in)valid double push
-            runMoveValidation(pos, toString(dbPushSq), canDoublePush);
+        // Define valid moves - any other move should be false
+        const Square pushSq{ from + dir };
+        const Square dbPushSq{ pushSq + dir };
 
         // Test block with every piece
         for (auto piece : pieces)
         {
             if (piece == Piece::empty) continue;
             pos.set(piece, pushSq);
-            runMoveValidation(pos, toString(pushSq), false);             // Test blocked push
+            runMoveValidation(pos, toString(pushSq), false, subtest);            // Test blocked push
 
-            for (std::string promote_to : {"Q", "R", "B", "N"})          // Test blocked promotion
-                runMoveValidation(pos,toString(pushSq) + "=" + promote_to, false);
+            for (std::string promote_to : {"Q", "R", "B", "N"})                  // Test blocked promotion
+                runMoveValidation(pos, toString(pushSq) + "=" + promote_to, false, subtest);
             pos.set(Piece::empty, pushSq);
 
             if (!isValid(dbPushSq))
                 continue;
-            
+
             pos.set(piece, dbPushSq);
-            runMoveValidation(pos, toString(pushSq), isPawn);            // Test false alarm? block (not actual block)
-            runMoveValidation(pos, toString(dbPushSq), false);           // Test blocked double push
+            runMoveValidation(pos, toString(pushSq), isPawn, subtest);           // Test false alarm? block (not actual block)
+            runMoveValidation(pos, toString(dbPushSq), false, subtest);          // Test blocked double push
             pos.set(Piece::empty, dbPushSq);
 
             if (piece == pawn)
                 continue;
 
             pos.set(piece, pushSq);
-            runMoveValidation(pos, toString(dbPushSq), false);           // Test blocked double push
+            runMoveValidation(pos, toString(dbPushSq), false, subtest);           // Test blocked double push
             pos.set(Piece::empty, pushSq);
         }
+
+        pos.set(Piece::empty, from);
+    }
+}
+
+void Tester::validatePawnCaptures(Piece pieceToValidate, Side side, TestCounter& test)
+{
+    Position pos{};
+    pos.resetBoard();
+    pos.m_sideToMove = side;
+    const auto enemySide{ !side };
+
+    const auto pawn{ toPiece(PieceType::pawn, side) };
+    bool isPawn{ pieceToValidate == pawn };
+    const Dir dir{ 0, pawnDir(side) };
+    const Dir left{ -1, 0 };
+    const Dir right{ 1, 0 };
+
+    SubtestSummary subtest{ test, "Basic Capture", isPawn };
+
+    // For every square, check all squares
+    for (int sq{ A8 }; sq <= H1; ++sq)
+    {
+        const Square from{ sq };
+        if (from.rank == PromotionRank(side)) continue; // Skip when pawn is on last rank for both sides (should be promoted piece by then)
+        pos.set(pieceToValidate, from);
+
+        // Define valid moves - any other move should be false
+        const Square pushSq{ from + dir };
+        const Square captureLeftSq{ pushSq + left };
+        const Square captureRightSq{ pushSq + right };
+
+        const bool validPromotion{ pushSq.rank == PromotionRank(side)};
+        const bool canCapture{ isPawn && !validPromotion };
 
         // Test capturing
         for (auto captureSq : { captureLeftSq, captureRightSq })
         {
             if (!isValid(captureSq))
                 continue;
-
-            Square enPassantSq{ captureSq.file, captureSq.rank - pawnDir(side) };
             std::string captureStr{ toString(from.file) + "x" + toString(captureSq) };
-            runMoveValidation(pos, captureStr, false);                   // Test capture attempt with no piece there
-            runMoveValidation(pos, captureStr, false);                   // Test en passant no piece there
-
+            runMoveValidation(pos, captureStr, false, subtest);                   // Test capture attempt with no piece there
+            runMoveValidation(pos, captureStr, false, subtest);                   // Test en passant no piece there
             // Test capture all piece types
             for (auto type : pieceTypes)
             {
                 pos.set(toPiece(type, side), captureSq);
-                runMoveValidation(pos, captureStr, false);               // Test capture on ally piece
-
+                runMoveValidation(pos, captureStr, false, subtest);               // Test capture on ally piece
                 pos.set(toPiece(type, enemySide), captureSq);
-                runMoveValidation(pos, captureStr, canCapture);          // Test capture on enemy
+                runMoveValidation(pos, captureStr, canCapture, subtest);          // Test capture on enemy
                 pos.set(Piece::empty, captureSq);
+            }
+        }
 
+        pos.set(Piece::empty, from);
+    }
+}
+
+void Tester::validatePawnEnPassant(Piece pieceToValidate, Side side, TestCounter& test)
+{
+    Position pos{};
+    pos.resetBoard();
+    pos.m_sideToMove = side;
+    const auto enemySide{ !side };
+
+    const auto pawn{ toPiece(PieceType::pawn, side) };
+    bool isPawn{ pieceToValidate == pawn };
+    const Dir dir{ 0, pawnDir(side) };
+    const Dir left{ -1, 0 };
+    const Dir right{ 1, 0 };
+
+    SubtestSummary subtest{ test, "En Passant", isPawn };
+
+    // For every square, check all squares
+    for (int sq{ A8 }; sq <= H1; ++sq)
+    {
+        const Square from{ sq };
+        if (from.rank == PromotionRank(side)) continue; // Skip when pawn is on last rank for both sides (should be promoted piece by then)
+        pos.set(pieceToValidate, from);
+
+        // Define valid moves - any other move should be false
+        const Square pushSq{ from + dir };
+        const Square captureLeftSq{ pushSq + left };
+        const Square captureRightSq{ pushSq + right };
+
+        for (auto captureSq : { captureLeftSq, captureRightSq })
+        {
+            if (!isValid(captureSq))
+                continue;
+            std::string captureStr{ toString(from.file) + "x" + toString(captureSq) };
+            Square enPassantSq{ captureSq.file, captureSq.rank - pawnDir(side) };
+            for (auto type : pieceTypes)
+            {
                 // Test en passant (no rights checking)
                 pos.set(toPiece(type, side), enPassantSq);
-                runMoveValidation(pos, captureStr, false);               // Test en passant on ally piece
-
+                runMoveValidation(pos, captureStr, false, subtest);               // Test en passant on ally piece
                 pos.set(toPiece(type, enemySide), enPassantSq);
-                runMoveValidation(pos, captureStr, false);               // Test en passant on enemy (includes pawn but no en passant rights)
+                runMoveValidation(pos, captureStr, false, subtest);              // Test en passant on enemy (includes pawn but no en passant rights)
                 pos.set(Piece::empty, enPassantSq);
+            }
 
+            if (from.rank == EnPassantRank(side))
+            {
+                pos.set(toPiece(PieceType::pawn, enemySide), enPassantSq);
+                pos.m_enPassant = enPassantSq;
+                runMoveValidation(pos, captureStr, isPawn, test);
+                pos.set(Piece::empty, enPassantSq);
+                pos.m_enPassant.reset();
+            }
+        }
+        pos.set(Piece::empty, from);
+    }
+}
+
+void Tester::validatePawnCapturePromotion(Piece pieceToValidate, Side side, TestCounter& test)
+{
+    Position pos{};
+    pos.resetBoard();
+    pos.m_sideToMove = side;
+    const auto enemySide{ !side };
+
+    const auto pawn{ toPiece(PieceType::pawn, side) };
+    bool isPawn{ pieceToValidate == pawn };
+    const Dir dir{ 0, pawnDir(side) };
+    const Dir left{ -1, 0 };
+    const Dir right{ 1, 0 };
+
+    SubtestSummary subtest{ test, "Capture Promotion", isPawn };
+
+    // For every square, check all squares
+    for (int sq{ A8 }; sq <= H1; ++sq)
+    {
+        const Square from{ sq };
+        if (from.rank == PromotionRank(side)) continue; // Skip when pawn is on last rank for both sides (should be promoted piece by then)
+        pos.set(pieceToValidate, from);
+
+        // Define valid moves - any other move should be false
+        const Square pushSq{ from + dir };
+        const Square captureLeftSq{ pushSq + left };
+        const Square captureRightSq{ pushSq + right };
+
+        const bool validPromotion{ pushSq.rank == PromotionRank(side) };
+        const bool canCapPromote{ isPawn && validPromotion };
+
+        for (auto captureSq : { captureLeftSq, captureRightSq })
+        {
+            if (!isValid(captureSq))
+                continue;
+            std::string captureStr{ toString(from.file) + "x" + toString(captureSq) };
+            Square enPassantSq{ captureSq.file, captureSq.rank - pawnDir(side) };
+            for (auto type : pieceTypes)
+            {
                 // Test capture all piece types & promote to all piece types
                 for (std::string promote_to : {"Q", "R", "B", "N"})
                 {
                     std::string capPromStr{ captureStr + "=" + promote_to };
                     pos.set(toPiece(type, side), captureSq);
-                    runMoveValidation(pos, capPromStr, false);           // Test capture & promote on ally piece
-
+                    runMoveValidation(pos, capPromStr, false, subtest);           // Test capture & promote on ally piece
                     pos.set(toPiece(type, enemySide), captureSq);
-                    runMoveValidation(pos, capPromStr, canCapPromote);   // Test capture & promote on enemy
+                    runMoveValidation(pos, capPromStr, canCapPromote, subtest);   // Test capture & promote on enemy
                     pos.set(Piece::empty, captureSq);
-
                     // Test en passant (no rights checking)
                     pos.set(toPiece(type, side), enPassantSq);
-                    runMoveValidation(pos, captureStr, false);           // Test en passant & promote on ally piece
-
+                    runMoveValidation(pos, captureStr, false, subtest);          // Test en passant & promote on ally piece
                     pos.set(toPiece(type, enemySide), enPassantSq);
-                    runMoveValidation(pos, capPromStr, false);           // Test en passant & promote on enemy (includes pawn but no en passant rights)
+                    runMoveValidation(pos, capPromStr, false, subtest);          // Test en passant & promote on enemy (includes pawn but no en passant rights)
                     pos.set(Piece::empty, enPassantSq);
                 }
             }
-
-            if (from.rank != EnPassantRank(side))
-                continue;
-
-            // Test en passant with given rights
-            
-            pos.set(toPiece(PieceType::pawn, enemySide), enPassantSq);
-            pos.m_enPassant = enPassantSq;
-            runMoveValidation(pos, captureStr, isPawn);
-            pos.set(Piece::empty, enPassantSq);
-            pos.m_enPassant.reset();
-
         }
-
         pos.set(Piece::empty, from);
-
     }
+
+}
+
+void Tester::validatePawnMoves(Piece piece, Side side, TestCounter& test)
+{
+    std::string prefix{ (piece == Piece::empty) ? "Empty Piece on " 
+                      : (typeOf(piece) == PieceType::pawn) ? "" : "Other Pieces on" };
+
+    bool isPawn{ piece == toPiece(PieceType::pawn, side) };
+    SubtestSummary subtest{ test, prefix + toString(side) + " Pawn Move ", isPawn};
+
+    validatePawnBasicMoves(piece, side, subtest);
+    validatePawnBlockedMoves(piece, side, subtest);
+    validatePawnCaptures(piece, side, subtest);
+    validatePawnEnPassant(piece, side, subtest);
+    validatePawnCapturePromotion(piece, side, subtest);
 }
 
 void Tester::testPawnMoveValidation()
 {
-    TestSummary testSummary{ *this, "Pawn Move Validation" };
+    TestSummary test{ "Pawn Move Validation" };
 
     for (auto side : { Side::white, Side::black })
     {
-        {
-            SubTestSummary subTestSide{ *this, toString(side) + " Pawn Move Validation" };
-            validatePawnMoves(toPiece(PieceType::pawn, side), side);
-        }
+        validatePawnMoves(toPiece(PieceType::pawn, side), side, test);
+        validatePawnMoves(Piece::empty, side, test);
 
+        for (auto otherPiece : pieces)
         {
-            SubTestSummary subTestSide{ *this, "Empty Piece on " + toString(side) + " Pawn Move Validation" };
-            validatePawnMoves(Piece::empty, side);
-        }
-
-        {
-            SubTestSummary subTestSide{ *this, "Other Pieces on " + toString(side) + " Pawn Move Validation" };
-            for (auto otherPiece : pieces)
-            {
-                if (otherPiece == Piece::empty || otherPiece == toPiece(PieceType::pawn, side))
-                    continue;
-                validatePawnMoves(otherPiece, side);
-            }
+            if (otherPiece == Piece::empty || otherPiece == toPiece(PieceType::pawn, side)) continue;
+            validatePawnMoves(otherPiece, side, test);
         }
     }
 }
@@ -527,7 +647,7 @@ void Tester::testPawnMoveValidation()
 // Test castling
 void Tester::testCastlingValidation()
 {
-    TestSummary testSummary{ *this, "Castling Validation" };
+    TestSummary test{"Castling Validation" };
 
     Placement whitePlacements[]{ p("wra1"), p("wrh1") };
     Placement blackPlacements[]{ p("bra8"), p("brh8") };
@@ -555,13 +675,13 @@ void Tester::testCastlingValidation()
             const std::string_view castle = ( isKingside ? "O-O" : "O-O-O");
 
             const std::string cSide = (isKingside ? " Kingside " : " Queenside ");
-            SubTestSummary subtestSummary{ *this, toString(side) + cSide + "Castling Validation" };
+            SubtestSummary subtest{test, toString(side) + cSide };
 
-            runMoveValidation(pos, castle, true);                                // Basic castling check
+            runMoveValidation(pos, castle, true, subtest);                                // Basic castling check
 
             // Fails if no castle rights (even if seemingly valid position)
             pos.removeCastleRights(side, castleSide);
-            runMoveValidation(pos, castle, false);                               // Attempt castling without rights
+            runMoveValidation(pos, castle, false, subtest);                                // Attempt castling without rights
             pos.setCastleRights(side, castleSide);
 
             const File blockFile{ isKingside ? File::f : File::d };
@@ -570,20 +690,20 @@ void Tester::testCastlingValidation()
                 Square blockSq{ reflSq(side, {blockFile, Rank::r1}) };
 
                 pos.set(piece, blockSq);
-                runMoveValidation(pos, castle, false); // Attempt castling with direct path block
+                runMoveValidation(pos, castle, false, subtest); // Attempt castling with direct path block
                 pos.set(Piece::empty, blockSq);
 
                 blockSq += dir;
 
                 pos.set(piece, blockSq);
-                runMoveValidation(pos, castle, false); // Attempt castling with separated path block
+                runMoveValidation(pos, castle, false, subtest); // Attempt castling with separated path block
                 pos.set(Piece::empty, blockSq); 
 
                 if (castleSide == CastleSide::queenside)
                 {
                     blockSq += dir;
                     pos.set(piece, blockSq);
-                    runMoveValidation(pos, castle, false); // Attempt castling with 2-separated path block
+                    runMoveValidation(pos, castle, false, subtest); // Attempt castling with 2-separated path block
                     pos.set(Piece::empty, blockSq);
                 }
             }
@@ -595,17 +715,17 @@ void Tester::testCastlingValidation()
 
                 Square enemySq{ attackSq(type, side, isKingside)};
                 pos.set(enemy, enemySq);
-                runMoveValidation(pos, castle, false); // Attempt castling in check
+                runMoveValidation(pos, castle, false, subtest); // Attempt castling in check
                 pos.set(Piece::empty, enemySq);
 
                 enemySq += dir;
                 pos.set(enemy, enemySq);
-                runMoveValidation(pos, castle, false); // Attempt castling through check
+                runMoveValidation(pos, castle, false, subtest); // Attempt castling through check
                 pos.set(Piece::empty, enemySq);
 
                 enemySq += dir;
                 pos.set(enemy, enemySq);
-                runMoveValidation(pos, castle, false); // Attempt castling into check
+                runMoveValidation(pos, castle, false, subtest); // Attempt castling into check
                 pos.set(Piece::empty, enemySq);
             }
 
@@ -913,24 +1033,24 @@ constexpr std::array invalidCastleMoves{
 
 void Tester::testMoveParsing()
 {
-    TestSummary testSummary{ *this, "Parsing Validation" };
+    TestSummary test{ "Parsing Validation" };
 
     for (auto move : validPawnMoves)
-        runMoveParsing(move, true);
+        runMoveParsing(move, true, test);
 
     for (auto move : validPieceMoves)
-        runMoveParsing(move, true);
+        runMoveParsing(move, true, test);
 
     for (auto move : validCastleMoves)
-        runMoveParsing(move, true);
+        runMoveParsing(move, true, test);
 
     for (auto move : invalidPawnMoves)
-        runMoveParsing(move, false);
+        runMoveParsing(move, false, test);
 
     for (auto move : invalidPieceMoves)
-        runMoveParsing(move, false);
+        runMoveParsing(move, false, test);
 
     for (auto move : invalidCastleMoves)
-        runMoveParsing(move, false);
+        runMoveParsing(move, false, test);
 
 }
