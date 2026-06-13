@@ -317,6 +317,12 @@ constexpr std::string_view sqToString(int sq)
     return names[static_cast<std::size_t>(sq)];
 }
 
+inline std::string toString(Side side)
+{
+    return ((side == Side::white) ? "White" : "Black");
+}
+
+
 inline constexpr std::array pieceTypes{
     PieceType::pawn,
     PieceType::rook,

@@ -28,14 +28,18 @@ public:
     void testIsCheckmateFunction();
 
     bool runMoveValidation(Position& pos, std::string_view input, bool expected);
-    
-    void testPawnMoveValidation();
+    void validatePawnMoves(Piece pieceToValidate, Side side);
+
     void testCastlingValidation();
+    void testPawnMoveValidation();
+    void testPieceMoveValidation();
 
     void printPosInfo(const Position& pos);
     void printDetails(const Position& pos);
 
     friend class TestSummary;
+    friend class SubTestSummary;
+
 private:
     Placement p(std::string_view text) { return *Parser(text).parsePlacement(); }
     bool m_verbose{ false };
@@ -49,21 +53,46 @@ class TestSummary
 public:
     TestSummary(Tester& tester, std::string_view name) : m_test_name{ name }, m_tester{ tester }
     {
-        std::cout << std::format("========== {:^25} ==========", m_test_name) << '\n';
-
+        std::cout << std::format("========== {:^25} ==========", m_test_name) << '\n' << '\n';
         m_tester.resetCount();
     }
 
     ~TestSummary()
     {
-
-        std::cout << '[' << m_tester.m_passedCount << '/' << m_tester.m_testCount << ']' << " Tests passed. \n \n";
-
+        std::cout << '[' << m_tester.m_passedCount << '/' << m_tester.m_testCount << ']' << " Total Tests passed. \n \n";
     }
 
 private:
     std::string m_test_name;
     Tester& m_tester;
+};
+
+class SubTestSummary
+{
+public:
+    SubTestSummary(Tester& tester, std::string_view name) : m_subtest_name{ name }, m_tester{ tester }
+    {
+        m_savedPassedCount = m_tester.m_passedCount;
+        m_savedTotalCount = m_tester.m_testCount;
+
+        std::cout << "    " << std::format("========== {:^25} ==========", m_subtest_name) << '\n' << '\n';
+
+        m_tester.resetCount();
+    }
+
+    ~SubTestSummary()
+    {
+        std::cout << "    " << '[' << m_tester.m_passedCount << '/' << m_tester.m_testCount << ']' << " Tests passed. \n \n";
+
+        m_tester.m_passedCount += m_savedPassedCount;
+        m_tester.m_testCount += m_savedTotalCount;
+    }
+
+private:
+    std::string m_subtest_name;
+    Tester& m_tester;
+    int m_savedPassedCount{};
+    int m_savedTotalCount{};
 };
 
 #endif
