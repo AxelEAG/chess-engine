@@ -614,17 +614,11 @@ void Tester::validatePawnCapturePromotion(Piece pieceToValidate, Side side, Test
 
 void Tester::validatePawnMoves(Piece piece, Side side, TestCounter& test)
 {
-    std::string prefix{ (piece == Piece::empty) ? "Empty Piece on " 
-                      : (typeOf(piece) == PieceType::pawn) ? "" : "Other Pieces on" };
-
-    bool isPawn{ piece == toPiece(PieceType::pawn, side) };
-    SubtestSummary subtest{ test, prefix + toString(side) + " Pawn Move ", isPawn};
-
-    validatePawnBasicMoves(piece, side, subtest);
-    validatePawnBlockedMoves(piece, side, subtest);
-    validatePawnCaptures(piece, side, subtest);
-    validatePawnEnPassant(piece, side, subtest);
-    validatePawnCapturePromotion(piece, side, subtest);
+    validatePawnBasicMoves(piece, side, test);
+    validatePawnBlockedMoves(piece, side, test);
+    validatePawnCaptures(piece, side, test);
+    validatePawnEnPassant(piece, side, test);
+    validatePawnCapturePromotion(piece, side, test);
 }
 
 void Tester::testPawnMoveValidation()
@@ -633,13 +627,22 @@ void Tester::testPawnMoveValidation()
 
     for (auto side : { Side::white, Side::black })
     {
-        validatePawnMoves(toPiece(PieceType::pawn, side), side, test);
-        validatePawnMoves(Piece::empty, side, test);
-
-        for (auto otherPiece : pieces)
         {
-            if (otherPiece == Piece::empty || otherPiece == toPiece(PieceType::pawn, side)) continue;
-            validatePawnMoves(otherPiece, side, test);
+            SubtestSummary subtest{ test, "Other Pieces on " + toString(side) + " Pawn Move " };
+            for (auto otherPiece : pieces)
+            {
+                if (otherPiece == Piece::empty || otherPiece == toPiece(PieceType::pawn, side)) continue;
+                validatePawnMoves(otherPiece, side, subtest);
+            }
+        }
+        {
+            SubtestSummary subtest{ test, "Empty Piece on " + toString(side) + " Pawn Move " };
+            validatePawnMoves(Piece::empty, side, subtest);
+        }
+
+        {
+            SubtestSummary subtest{ test, toString(side) + " Pawn Move " };
+            validatePawnMoves(toPiece(PieceType::pawn, side), side, subtest);
         }
     }
 }
