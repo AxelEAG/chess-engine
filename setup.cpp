@@ -46,21 +46,26 @@ void Position::setup()
 	setCastleRights(Side::black);
 }
 
-void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo)
+void Position::load(const PositionInfo& posInfo)
 {
-	pos.resetBoard();
-
-	for (const auto& placement : placements)
-		pos.set(placement.piece, placement.place);
+	resetBoard();
+	for (const auto& placement : posInfo.placements)
+		set(placement.piece, placement.place);
 	
-	pos.set(Piece::white_king, posInfo.whiteKingSq);
-	pos.set(Piece::black_king, posInfo.blackKingSq);
+	if (posInfo.whiteKingSq)
+	{
+		set(Piece::white_king, *posInfo.whiteKingSq);
+		m_whiteKingSq = *posInfo.whiteKingSq;
+	}
+	if (posInfo.blackKingSq)
+	{
+		set(Piece::black_king, *posInfo.blackKingSq);
+		m_blackKingSq = *posInfo.blackKingSq;
+	}
 
-	pos.m_whiteKingSq	 = posInfo.whiteKingSq;
-	pos.m_blackKingSq	 = posInfo.blackKingSq;
-	pos.m_castlingRights = posInfo.castlingRights;
-	pos.m_enPassant		 = posInfo.enPassant;
-	pos.m_sideToMove	 = posInfo.sideToMove;
+	m_castlingRights = posInfo.castlingRights;
+	m_enPassant		 = posInfo.enPassant;
+	m_sideToMove	 = posInfo.sideToMove;
 }
 
 
