@@ -15,11 +15,12 @@ struct Placement
 
 struct PositionInfo
 {
-	Square whiteKingSq;
-	Square blackKingSq;
-	Side   sideToMove;
-	std::optional<Square> enPassant{ std::nullopt };
-	std::uint8_t castlingRights{ 0b0000'1111 };
+	Side sideToMove{ Side::white };
+	std::vector<Placement> placements{};
+	std::optional<Square> whiteKingSq{ std::nullopt };
+	std::optional<Square> blackKingSq{ std::nullopt };
+	std::optional<Square> enPassant  { std::nullopt };
+	std::uint8_t castlingRights{ 0b0000'0000 };
 };
 
 std::size_t getIndex(Square sq);
@@ -27,7 +28,8 @@ std::size_t getIndex(Square sq);
 class Position
 {
 public:
-	Position() { setup(); };
+	Position() { setup(); }
+	Position(const PositionInfo& posInfo) { load(posInfo); }
 
 	Undo   doMove(const Move& move);
 	void undoMove(const Move& move, const Undo& undo);
@@ -41,7 +43,7 @@ public:
 	std::optional<Square>  getEnPassant() const { return m_enPassant; }
 
 	void setup();
-	friend void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo);
+	void load(const PositionInfo& posInfo);
 	friend class Tester;
 
 private:
