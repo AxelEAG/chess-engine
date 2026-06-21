@@ -23,6 +23,11 @@ struct Dir
 	int y{};
 };
 
+constexpr Dir operator*(int x, Dir dir)
+{
+	return Dir{ x * dir.x, x * dir.y };
+}
+
 enum Rank
 {
 	r8,

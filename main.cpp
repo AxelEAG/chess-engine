@@ -56,10 +56,10 @@ int main()
 	//}
 	
 	// parserTester();
-	Tester t{ false, true };
-	t.testPawnMoveValidation();
+	Tester t{ false };
+	// t.testPawnMoveValidation();
 
-	// t.testMoveParsing();
+	t.testMoveParsing();
 	// t.testIsCheckFunction();
 	// t.testIsCheckmateFunction();
 	t.testCastlingValidation();

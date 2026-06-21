@@ -39,6 +39,7 @@ public:
 
 	Side   getSide() const { return m_sideToMove; }
 	Square getKingSq(Side side) const;
+	bool   getCastleRights() const { return m_castlingRights; }
 	bool   getCastleRights(Side side, CastleSide castleSide) const;
 	std::optional<Square>  getEnPassant() const { return m_enPassant; }
 

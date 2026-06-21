@@ -217,4 +217,11 @@ inline std::ostream& operator<<(std::ostream& out, const Move& move)
 	return out;
 }
 
+inline std::string toString(CastleSide castleSide)
+{
+	if (castleSide == CastleSide::kingside)
+		return "Kingside";
+	else
+		return "Queenside";
+}
 #endif

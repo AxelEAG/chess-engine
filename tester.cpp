@@ -6,55 +6,15 @@
 #include <thread>
 #include <chrono>
 
-void printCastlingRights(uint8_t castlingRights);
 void printBoard(const Position& pos);
+void printPosInfo(const Position& pos);
+void printDetails(const Position& pos);
+
 std::optional<ParsedMove> parseMove(std::string_view text);
-void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo);
 
 constexpr std::uint8_t castleMask(Side side);
 bool isValid(Square sq);
 
-
-void Tester::loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo)
-{
-    ::loadInto(pos, placements, posInfo);
-    if (m_verbose)
-    {
-        printBoard(pos);
-        std::cout << '\n';
-    }
-}
-
-void printMove(const Position& pos, const Move& move)
-{
-    // TODO stringify move?
-    std::cout << '[' <<move.flags << "]: " << move.from << " to " << move.to << '\n';
-}
-
-void Tester::printPosInfo(const Position& pos)
-{
-
-    std::cout << "Side: " << pos.m_sideToMove << '.' << ' ';
-    std::cout << "King Sq: WK" << pos.m_whiteKingSq << ' ' << "BK" << pos.m_blackKingSq << '\n';
-    
-    std::cout << "CRights:";
-    printCastlingRights(pos.m_castlingRights);
-    std::cout << ". En passant: ";
-    if (pos.m_enPassant)
-        std::cout << *pos.m_enPassant;
-    else
-        std::cout << "False";
-
-    std::cout << '\n';
-
-}
-
-void Tester::printDetails(const Position& pos)
-{
-    printBoard(pos);
-    printPosInfo(pos);
-    std::cout << '\n';
-}
 
 void playthroughTester()
 {
@@ -62,11 +22,11 @@ void playthroughTester()
     Position position{};
 }
 
-bool Tester::runMoveParsing(std::string_view input, bool expected, TestCounter& test)
+bool Test::runMoveParsing(std::string_view input, bool expected)
 {
     std::string test_name = "Expected " + std::string{ input } + " to" + (expected ? " " : " not ") + "be parsed";
 
-    const int testNumber{ test.incTestCount() };
+    const int testNumber{ incTestCount() };
 
     auto parsedMove{ parseMove(input) };
 
@@ -76,13 +36,10 @@ bool Tester::runMoveParsing(std::string_view input, bool expected, TestCounter& 
         return false;
     }
 
-    test.incPassedCount();
+    incPassedCount();
 
     if (m_verbose)
-    {
         std::cout << "[PASSED] Test #" << testNumber << ' ' << test_name << '\n';
-        // std::this_thread::sleep_for(std::chrono::seconds(2));
-    }
 
     return true;
 }
@@ -99,7 +56,7 @@ bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expec
     if (static_cast<bool>(move) != expected) // Validation should match expectation
     {
         std::cerr << "[FAILED] Test #" << testNumber << ' ' << test_name << '\n';
-        if (m_verboseErrors) printDetails(pos);
+        printDetails(pos);
         return false;
     }
 
@@ -109,6 +66,35 @@ bool Tester::runMoveValidation(Position& pos, std::string_view input, bool expec
     {
         std::cout << "[PASSED] Test #" << testNumber << ' ' << test_name << '\n';
         printDetails(pos);
+        // std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+
+    return true;
+}
+
+bool Test::runMoveValidation(std::string_view input, bool expected)
+{
+    std::string test_name = "Expected " + std::string{ input } + " to be" + (expected ? " " : " in") + "valid";
+
+    const int testNumber{ incTestCount() };
+
+    auto parsedMove{ parseMove(input) };
+    assert(parsedMove && "checkMoveValidation: Should have parsed input successfuly.");
+    auto move{ Validator(m_pos).validate(*parsedMove) };
+
+    if (static_cast<bool>(move) != expected) // Validation should match expectation
+    {
+        std::cerr << "[FAILED] Test #" << testNumber << ' ' << test_name << '\n';
+        printDetails(m_pos);
+        return false;
+    }
+
+    incPassedCount();
+
+    if (m_verbose)
+    {
+        std::cout << "[PASSED] Test #" << testNumber << ' ' << test_name << '\n';
+        printDetails(m_pos);
         // std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
@@ -127,7 +113,7 @@ bool Tester::runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool ex
     if (result != expected)
     {
         std::cerr << "[FAILED] Test #" << testNumber << ' ' << test_name << '\n';
-        if (m_verboseErrors) printDetails(pos);
+        printDetails(pos);
         pos.set(Piece::empty, sq);
         return false;
     }
@@ -144,36 +130,6 @@ bool Tester::runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool ex
     pos.set(Piece::empty, sq);
 
     return true;
-}
-
-// Helper to reflect square if black
-Square reflSq(Side side, Square sq)
-{
-    if (side == Side::white)
-        return sq;
-    else
-        return { sq.file, 7 - sq.rank };
-}
-
-// Helper to put attackers in the right starting square for castling validation
-Square attackSq(PieceType type, Side side, bool kSide)
-{
-    switch (type)
-    {
-    case PieceType::rook:
-    case PieceType::queen:
-        return reflSq(side, E7);
-    case PieceType::bishop:
-        return reflSq(side, kSide ? B4 : H4);
-    case PieceType::knight:
-        return reflSq(side, kSide ? F3 : D3);
-    case PieceType::pawn:
-    case PieceType::king:
-        return reflSq(side, kSide ? F2 : D2);
-    default:
-        assert(0 && "attackSq: bad use of helper function");
-        return { 0, 0 };
-    }
 }
 
 // For visitAttackers function: test that it's allies / wrong piece it'll ignore them
@@ -193,16 +149,14 @@ void Tester::testIsCheckFunction()
     Square kingSq{ F4 };
     Square opKingSq{ A8 };
 
-    Position pos{};
-
     PositionInfo posInfo{
+        .sideToMove = side,
         .whiteKingSq = side == Side::white ? kingSq : opKingSq,
         .blackKingSq = side == Side::white ? opKingSq : kingSq,
-        .sideToMove = side,
         .castlingRights = 0
     };
 
-    loadInto(pos, {}, posInfo);
+    Position pos{posInfo};
 
     // For every piece on every square, make sure they only give checks on the expected squares (given the king's position (F4))
 
@@ -256,15 +210,13 @@ void Tester::testIsCheckmateFunction()
     Placement placements[]{ p("bbh8") };
 
     PositionInfo posInfo{
+        .sideToMove = side,
         .whiteKingSq = side == Side::white ? kingSq : opKingSq,
         .blackKingSq = side == Side::white ? opKingSq : kingSq,
-        .sideToMove = side,
         .castlingRights = 0
     };
 
-    Position pos{};
-
-    loadInto(pos, {}, posInfo);
+    Position pos{ posInfo };
 
     auto attacker{ toPiece(PieceType::rook, side) };
 
@@ -542,7 +494,7 @@ void Tester::validatePawnEnPassant(Piece pieceToValidate, Side side, TestCounter
             {
                 pos.set(toPiece(PieceType::pawn, enemySide), enPassantSq);
                 pos.m_enPassant = enPassantSq;
-                runMoveValidation(pos, captureStr, isPawn, test);
+                runMoveValidation(pos, captureStr, isPawn, subtest);
                 pos.set(Piece::empty, enPassantSq);
                 pos.m_enPassant.reset();
             }
@@ -647,89 +599,102 @@ void Tester::testPawnMoveValidation()
     }
 }
 
+// Helper to reflect square if black
+Square reflSq(Side side, Square sq)
+{
+    if (side == Side::white)
+        return sq;
+    else
+        return { sq.file, 7 - sq.rank };
+}
+
+// Helper to put attackers in the right starting square for castling validation
+Square attackSq(PieceType type, Side side, bool kSide)
+{
+    switch (type)
+    {
+    case PieceType::rook:
+    case PieceType::queen:
+        return reflSq(side, E7);
+    case PieceType::bishop:
+        return reflSq(side, kSide ? B4 : H4);
+    case PieceType::knight:
+        return reflSq(side, kSide ? F3 : D3);
+    case PieceType::pawn:
+    case PieceType::king:
+        return reflSq(side, kSide ? F2 : D2);
+    default:
+        assert(0 && "attackSq: bad use of helper function");
+        return { 0, 0 };
+    }
+}
+
 // Test castling
 void Tester::testCastlingValidation()
 {
-    TestSummary test{"Castling Validation" };
+    TestGroup castlingTests{"Castling Validation" };
 
-    Placement whitePlacements[]{ p("wra1"), p("wrh1") };
-    Placement blackPlacements[]{ p("bra8"), p("brh8") };
+    std::vector<Placement> whitePlacements{ p("wra1"), p("wrh1") };
+    std::vector<Placement> blackPlacements{ p("bra8"), p("brh8") };
 
     for (auto side : { Side::white, Side::black })
     {
-        Position pos{};
+        TestGroup sideCastlingGroup{ &castlingTests, toString(side) + " Tests" };
 
         PositionInfo posInfo{
+            .sideToMove = side,
+            .placements = side == Side::white ? whitePlacements : blackPlacements,
             .whiteKingSq = { E1 },
             .blackKingSq = { E8 },
-            .sideToMove = side,
             .castlingRights = castleMask(side)
         };
-        std::span placements = side == Side::white ? whitePlacements : blackPlacements;
-
-        loadInto(pos, placements, posInfo);
-
         const auto enemySide{ !side };
 
         for (auto castleSide : { CastleSide::kingside, CastleSide::queenside })
         {
+            Test test{ &sideCastlingGroup, toString(castleSide), posInfo, m_verbose };
+
             const bool isKingside{ castleSide == CastleSide::kingside };
             const Dir dir = (isKingside ? Dir{ 1, 0 } : Dir{ -1, 0 });
             const std::string_view castle = ( isKingside ? "O-O" : "O-O-O");
 
-            const std::string cSide = (isKingside ? " Kingside " : " Queenside ");
-            SubtestSummary subtest{test, toString(side) + cSide };
 
-            runMoveValidation(pos, castle, true, subtest);                                // Basic castling check
+            test.runMoveValidation(castle, true);                                // Basic castling check
 
             // Fails if no castle rights (even if seemingly valid position)
-            pos.removeCastleRights(side, castleSide);
-            runMoveValidation(pos, castle, false, subtest);                                // Attempt castling without rights
-            pos.setCastleRights(side, castleSide);
+            test.m_pos.removeCastleRights(side, castleSide);
+            test.runMoveValidation(castle, false);                                // Attempt castling without rights
+            test.m_pos.setCastleRights(side, castleSide);
 
+            auto testWithPiece = [&](auto piece, Square square)
+                {
+                    test.m_pos.set(piece, square);
+                    test.runMoveValidation(castle, false);
+                    test.m_pos.set(Piece::empty, square);
+                };
+
+            // Fails with any blocks
             const File blockFile{ isKingside ? File::f : File::d };
-            for (auto piece : {toPiece(PieceType::bishop, side), toPiece(PieceType::knight, side), toPiece(PieceType::queen, side), toPiece(PieceType::rook, side), toPiece(PieceType::knight, enemySide) })
+            for (auto piece : {toPiece(PieceType::bishop, side), toPiece(PieceType::knight, side), 
+                toPiece(PieceType::queen, side), toPiece(PieceType::rook, side), toPiece(PieceType::knight, enemySide) })
             {
                 Square blockSq{ reflSq(side, {blockFile, Rank::r1}) };
 
-                pos.set(piece, blockSq);
-                runMoveValidation(pos, castle, false, subtest); // Attempt castling with direct path block
-                pos.set(Piece::empty, blockSq);
-
-                blockSq += dir;
-
-                pos.set(piece, blockSq);
-                runMoveValidation(pos, castle, false, subtest); // Attempt castling with separated path block
-                pos.set(Piece::empty, blockSq); 
-
+                testWithPiece(piece, blockSq);                 // Attempt castling with direct path block
+                testWithPiece(piece, blockSq + dir);           // Attempt castling with separated path block
                 if (castleSide == CastleSide::queenside)
-                {
-                    blockSq += dir;
-                    pos.set(piece, blockSq);
-                    runMoveValidation(pos, castle, false, subtest); // Attempt castling with 2-separated path block
-                    pos.set(Piece::empty, blockSq);
-                }
+                    testWithPiece(piece, blockSq + 2 * dir);   // Attempt castling with 2-separated path block
             }
 
             // Fails if pieces can attack the king
             for (auto type : pieceTypes) // (includes king, would be two on the board, but helpful for validation of temporary move checks)
             {
                 const Piece enemy{ toPiece(type, enemySide) };
-
                 Square enemySq{ attackSq(type, side, isKingside)};
-                pos.set(enemy, enemySq);
-                runMoveValidation(pos, castle, false, subtest); // Attempt castling in check
-                pos.set(Piece::empty, enemySq);
 
-                enemySq += dir;
-                pos.set(enemy, enemySq);
-                runMoveValidation(pos, castle, false, subtest); // Attempt castling through check
-                pos.set(Piece::empty, enemySq);
-
-                enemySq += dir;
-                pos.set(enemy, enemySq);
-                runMoveValidation(pos, castle, false, subtest); // Attempt castling into check
-                pos.set(Piece::empty, enemySq);
+                testWithPiece(enemy, enemySq);                 // Attempt castling in check
+                testWithPiece(enemy, enemySq + dir);           // Attempt castling through check
+                testWithPiece(enemy, enemySq + 2 * dir);       // Attempt castling into check
             }
 
         }
@@ -1036,24 +1001,24 @@ constexpr std::array invalidCastleMoves{
 
 void Tester::testMoveParsing()
 {
-    TestSummary test{ "Parsing Validation" };
+    Test test{ "Parsing Validation" };
 
     for (auto move : validPawnMoves)
-        runMoveParsing(move, true, test);
+        test.runMoveParsing(move, true);
 
     for (auto move : validPieceMoves)
-        runMoveParsing(move, true, test);
+        test.runMoveParsing(move, true);
 
     for (auto move : validCastleMoves)
-        runMoveParsing(move, true, test);
+        test.runMoveParsing(move, true);
 
     for (auto move : invalidPawnMoves)
-        runMoveParsing(move, false, test);
+        test.runMoveParsing(move, false);
 
     for (auto move : invalidPieceMoves)
-        runMoveParsing(move, false, test);
+        test.runMoveParsing(move, false);
 
     for (auto move : invalidCastleMoves)
-        runMoveParsing(move, false, test);
+        test.runMoveParsing(move, false);
 
 }

@@ -1,5 +1,7 @@
 #include "position.h"
 
+void printCastlingRights(uint8_t castlingRights);
+
 void Position::resetBoard()
 {
 	for (auto& square : m_board)
@@ -90,5 +92,29 @@ void printBoard(const Position& pos)
 
 	for (auto file : files)
 		std::cout << file << ' ';
+	std::cout << '\n';
+}
+
+void printPosInfo(const Position& pos)
+{
+
+	std::cout << "Side: " << pos.getSide() << '.' << ' ';
+	std::cout << "King Sq: WK" << pos.getKingSq(Side::white) << ' ' << "BK" << pos.getKingSq(Side::black) << '\n';
+
+	std::cout << "CRights:";
+	printCastlingRights(pos.getCastleRights());
+	std::cout << ". En passant: ";
+	if (pos.getEnPassant())
+		std::cout << *pos.getEnPassant();
+	else
+		std::cout << "False";
+
+	std::cout << '\n';
+}
+
+void printDetails(const Position& pos)
+{
+	printBoard(pos);
+	printPosInfo(pos);
 	std::cout << '\n';
 }

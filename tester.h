@@ -10,15 +10,8 @@ class TestCounter;
 class Tester
 {
 public:
-    Tester(bool verbose = false, bool verboseErrors = false) 
-        : m_verbose{ verbose }
-        , m_verboseErrors{ verboseErrors }
-    {
-    };
+    Tester(bool verbose = false) : m_verbose{ verbose } {}
 
-    void loadInto(Position& pos, std::span<Placement> placements, PositionInfo& posInfo);
-
-    bool runMoveParsing(std::string_view input, bool expected, TestCounter& test);
     void testMoveParsing();
 
     bool runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate, TestCounter& test);
@@ -38,27 +31,14 @@ public:
     void testPawnMoveValidation();
     void testPieceMoveValidation();
 
-    void printPosInfo(const Position& pos);
-    void printDetails(const Position& pos);
-
     friend class TestCounter;
     friend class TestSummary;
     friend class SubtestSummary;
+    friend class Test;
 
 private:
     Placement p(std::string_view text) { return *Parser(text).parsePlacement(); }
     bool m_verbose{ false };
-    bool m_verboseErrors{ false };
-};
-
-class TestCounter
-{
-public:
-    virtual ~TestCounter() = default;
-
-    virtual int incTestCount() = 0;
-    virtual void incPassedCount() = 0;
-    virtual int getDepth() = 0;
 };
 
 inline std::string makeBanner(std::string_view text, int tab = 0, int width = 50)
@@ -75,6 +55,87 @@ inline std::string makeBanner(std::string_view text, int tab = 0, int width = 50
 
     return tabSpace + std::string(leftPadding, '=') + title + std::string(rightPadding, '=');
 }
+
+class TestGroup
+{
+public:
+    TestGroup(TestGroup* parent, std::string_view name)
+        : m_parent{ parent }, m_name{ name }, m_depth{ m_parent ? m_parent->getDepth() + 1 : 0 }
+    {
+        std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
+    }
+    TestGroup(std::string_view name) : TestGroup(nullptr, name) {}
+
+
+    ~TestGroup()
+    {
+        std::cout << std::string(4 * getDepth(), ' ') << '[' << m_passedCount << '/' << m_testCount << ']' << " Tests passed. \n \n";
+    }
+
+    int incTestCount() { if (m_parent) m_parent->incTestCount(); return ++m_testCount; }
+    void incPassedCount() { if (m_parent) m_parent->incPassedCount(); ++m_passedCount; }
+    int getDepth() { return m_depth; };
+
+
+private:
+    int m_testCount{ 0 };
+    int m_passedCount{ 0 };
+    std::string m_name;
+    TestGroup* m_parent;
+    int m_depth{ 0 };
+};
+
+class Test
+{
+public:
+    Test(TestGroup* parent, std::string_view name, const PositionInfo& posInfo, bool verbose = false)
+        : m_parent{ parent }
+        , m_name{ name } 
+        , m_depth{ m_parent ? m_parent->getDepth() + 1 : 0 }
+        , m_pos { Position { posInfo }}
+        , m_verbose {verbose}
+    {
+        std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
+    }
+    Test(std::string_view name, const PositionInfo& posInfo, bool verbose = false) : Test(nullptr, name, posInfo, verbose) {}
+    Test(std::string_view name, bool verbose = false) : m_name{ name }, m_verbose{ verbose } 
+    {
+        std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
+    }
+
+
+    ~Test()
+    {
+        std::cout << std::string(4 * getDepth(), ' ') << '[' << m_passedCount << '/' << m_testCount << ']' << " Tests passed. \n \n";
+    }
+
+    bool runMoveParsing(std::string_view input, bool expected);
+    bool runMoveValidation(std::string_view input, bool expected);
+
+    int incTestCount() { if (m_parent) m_parent->incTestCount(); return ++m_testCount; }
+    void incPassedCount() { if (m_parent) m_parent->incPassedCount(); ++m_passedCount; }
+    int getDepth() { return m_depth; };
+
+    Position m_pos{};
+private:
+    int m_testCount{ 0 };
+    int m_passedCount{ 0 };
+    std::string m_name;
+    TestGroup* m_parent{nullptr};
+    int m_depth{ 0 };
+    bool m_verbose{ false };
+};
+
+
+class TestCounter
+{
+public:
+    virtual ~TestCounter() = default;
+
+    virtual int incTestCount() = 0;
+    virtual void incPassedCount() = 0;
+    virtual int getDepth() = 0;
+};
 
 class TestSummary : public TestCounter
 {
