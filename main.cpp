@@ -57,7 +57,7 @@ int main()
 	
 	// parserTester();
 	Tester t{ false };
-	// t.testPawnMoveValidation();
+	t.testPawnMoveValidation();
 
 	t.testMoveParsing();
 	// t.testIsCheckFunction();

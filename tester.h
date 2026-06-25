@@ -5,7 +5,7 @@
 
 #include <format>
 
-class TestCounter;
+class TestGroup;
 
 class Tester
 {
@@ -14,18 +14,16 @@ public:
 
     void testMoveParsing();
 
-    bool runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate, TestCounter& test);
+    bool runCheckFunc(Position& pos, Piece piece, int sq, Side side, bool expected, bool checkmate, TestGroup& test);
     void testIsCheckFunction();
     void testIsCheckmateFunction();
 
-    bool runMoveValidation(Position& pos, std::string_view input, bool expected, TestCounter& test);
-    void validatePawnBasicMoves(Piece pieceToValidate, Side side, TestCounter& test);
-    void validatePawnBlockedMoves(Piece pieceToValidate, Side side, TestCounter& test);
-    void validatePawnCaptures(Piece pieceToValidate, Side side, TestCounter& test);
-    void validatePawnEnPassant(Piece pieceToValidate, Side side, TestCounter& test);
-    void validatePawnCapturePromotion(Piece pieceToValidate, Side side, TestCounter& test);
-
-    void validatePawnMoves(Piece pieceToValidate, Side side, TestCounter& test);
+    void       validatePawnBasicMoves(Piece pieceToValidate, Side side, TestGroup& pawnTests);
+    void     validatePawnBlockedMoves(Piece pieceToValidate, Side side, TestGroup& pawnTests);
+    void         validatePawnCaptures(Piece pieceToValidate, Side side, TestGroup& pawnTests);
+    void        validatePawnEnPassant(Piece pieceToValidate, Side side, TestGroup& pawnTests);
+    void validatePawnCapturePromotion(Piece pieceToValidate, Side side, TestGroup& pawnTests);
+    void            validatePawnMoves(Piece pieceToValidate, Side side, TestGroup& pawnTests);
 
     void testCastlingValidation();
     void testPawnMoveValidation();
@@ -88,26 +86,35 @@ private:
 class Test
 {
 public:
-    Test(TestGroup* parent, std::string_view name, const PositionInfo& posInfo, bool verbose = false)
+    Test(TestGroup* parent, std::string_view name, const PositionInfo& posInfo, bool verbose = false, bool isTracked = true)
         : m_parent{ parent }
         , m_name{ name } 
         , m_depth{ m_parent ? m_parent->getDepth() + 1 : 0 }
         , m_pos { Position { posInfo }}
-        , m_verbose {verbose}
+        , m_verbose { verbose }
+        , m_isTracked { isTracked }
     {
-        std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
+        if (m_isTracked)
+            std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
     }
+
     Test(std::string_view name, const PositionInfo& posInfo, bool verbose = false) : Test(nullptr, name, posInfo, verbose) {}
+
     Test(std::string_view name, bool verbose = false) : m_name{ name }, m_verbose{ verbose } 
     {
-        std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
+        if (m_isTracked)
+            std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
     }
 
 
     ~Test()
     {
-        std::cout << std::string(4 * getDepth(), ' ') << '[' << m_passedCount << '/' << m_testCount << ']' << " Tests passed. \n \n";
+        if (m_isTracked)
+            std::cout << std::string(4 * getDepth(), ' ') << '[' << m_passedCount << '/' << m_testCount << ']' << " Tests passed. \n \n";
     }
+
+    void set(Piece piece, Square sq) { m_pos.set(piece, sq);}
+    void set(PieceType type, Side side, Square sq) { set(toPiece(type, side), sq); }
 
     bool runMoveParsing(std::string_view input, bool expected);
     bool runMoveValidation(std::string_view input, bool expected);
@@ -124,77 +131,7 @@ private:
     TestGroup* m_parent{nullptr};
     int m_depth{ 0 };
     bool m_verbose{ false };
-};
-
-
-class TestCounter
-{
-public:
-    virtual ~TestCounter() = default;
-
-    virtual int incTestCount() = 0;
-    virtual void incPassedCount() = 0;
-    virtual int getDepth() = 0;
-};
-
-class TestSummary : public TestCounter
-{
-public:
-    TestSummary(std::string_view name) : m_name{ name }
-    {
-        std::cout << makeBanner(name) << '\n' << '\n';
-    }
-
-    ~TestSummary()
-    {
-        std::cout << '[' << m_passedCount << '/' << m_testCount << ']' << " Total Tests passed. \n \n";
-    }
-
-    int incTestCount() override { return ++m_testCount; }
-    void incPassedCount() override { ++m_passedCount; }
-    int getDepth() override { return m_depth; };
-
-    friend class SubtestSummary;
-    int m_testCount{ 0 };
-    int m_passedCount{ 0 };
-
-private:
-    std::string m_name;
-    int m_depth{ 0 };
-};
-
-class SubtestSummary : public TestCounter
-{
-public:
-    SubtestSummary(TestCounter& parent, std::string_view name, bool isTracked = true) 
-        : m_parent{ parent }
-        , m_name{ name }
-        , m_isTracked {isTracked}
-        , m_depth {parent.getDepth() + 1}
-    {
-        if (m_isTracked)
-            std::cout << makeBanner(name, 4 * getDepth(), 50) << '\n' << '\n';
-    }
-
-    ~SubtestSummary()
-    {
-        if (m_isTracked)
-            std::cout << std::string(4 * getDepth(), ' ') << '[' << m_passedCount << '/' << m_testCount << ']' << " Tests passed. \n \n";
-    }
-
-    int incTestCount() override { m_parent.incTestCount(); return ++m_testCount; }
-    void incPassedCount() override { m_parent.incPassedCount(); ++m_passedCount; }
-    int getDepth() override { return m_depth; };
-
-    int m_testCount{ 0 };
-    int m_passedCount{ 0 };
-
-private:
-
-    std::string m_name;
-    TestCounter& m_parent;
     bool m_isTracked{ true };
-    int m_depth{ 0 };
 };
 
 #endif

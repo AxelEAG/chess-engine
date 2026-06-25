@@ -46,6 +46,7 @@ public:
 	void setup();
 	void load(const PositionInfo& posInfo);
 	friend class Tester;
+	friend class Test;
 
 private:
 	std::array<Piece, 64> m_board;
